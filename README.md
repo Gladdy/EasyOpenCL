@@ -1,13 +1,39 @@
-# EasyOpenCL
+## EasyOpenCL
 
-After installing the proper driver you should be able to `make` the framework.
+> The easiest way to get started with OpenCL!
 
-NOTES:
-If your compiler starts to complain about 'clCreateCommandQueueWithProperties'
-or 'clCreateCommandQueue' try the other (opencl-framework.cpp line 69).
+### Overview : it's this simple
+```cpp
 
-The reason for this is that 'clCreateCommandQueue' has been deprecated in favour
-of 'clCreateCommandQueueWithProperties'. However, this happened in the update to
-OpenCL 2.0. Some devices do not support OpenCL 2.0,they still abide to the older
-(OpenCL 1.1 or OpenCL 1.2) specification which does not include the depreciation
-of 'clCreateCommandQueue', hence on older systems you will need to use that.
+std::vector<int> input_1 (5,5);
+std::vector<int> input_2 { 1, 2, 3, 4, 5 };
+
+try {
+		EasyOpenCL<int> framework (SHOW_DEBUG);
+
+		framework.loadKernel("arithmetic.cl");
+
+		framework.addInputBuffer(0, input_1);
+		framework.addInputBuffer(1, input_2);
+		framework.addOutputBuffer(3);
+		
+		framework.runKernel();
+		
+		framework.showOutputBuffer();
+	}
+	catch (std::exception& e) {
+		std::cerr << "Error: " << e.what() << std::endl;
+	}
+
+```
+
+### Getting started
+```
+git clone https://github.com/Gladdy/EasyOpenCL.git
+cd EasyOpenCL
+mkdir build && cd build
+cmake ..
+make 
+./test
+```
+

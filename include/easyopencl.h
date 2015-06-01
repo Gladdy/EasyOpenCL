@@ -1,5 +1,5 @@
-#ifndef _OPENCLFRAMEWORK_
-#define _OPENCLFRAMEWORK_
+#ifndef _EASYOPENCL_
+#define _EASYOPENCL_
 
 #include <CL/cl.h>
 
@@ -10,9 +10,9 @@
 #define NO_DEBUG false
 
 template<class T>
-class OpenCLFramework {
+class EasyOpenCL {
 public:
-	OpenCLFramework(bool);
+	EasyOpenCL(bool);
 	void loadKernel(std::string);
 
 	void addInputBuffer(int,std::vector<T>);
@@ -39,7 +39,6 @@ private:
 	cl_command_queue commandQueue;
 	cl_program program;
 	cl_kernel kernel;
-
 
 	std::vector<cl_mem> inputBufferVector;
 	cl_mem outputBuffer;

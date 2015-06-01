@@ -7,12 +7,12 @@
 #include <sstream>
 
 template<class T>
-void OpenCLFramework<T>::raiseError(std::string errorString) {
+void EasyOpenCL<T>::raiseError(std::string errorString) {
 	throw std::runtime_error(errorString.c_str());
 }
 
 template<class T>
-void OpenCLFramework<T>::checkError(std::string errorLocation) {
+void EasyOpenCL<T>::checkError(std::string errorLocation) {
 	if (status != CL_SUCCESS)
 	{
 		raiseError(errorLocation + '\t' + getErrorString(status));
@@ -20,7 +20,7 @@ void OpenCLFramework<T>::checkError(std::string errorLocation) {
 }
 
 template<class T>
-OpenCLFramework<T>::OpenCLFramework(bool printData) {
+EasyOpenCL<T>::EasyOpenCL(bool printData) {
 
 	info = printData;
 	cl_uint numPlatforms;	//the NO. of platforms
@@ -71,7 +71,7 @@ OpenCLFramework<T>::OpenCLFramework(bool printData) {
 }
 
 template<class T>
-void OpenCLFramework<T>::loadKernel(std::string filename) {
+void EasyOpenCL<T>::loadKernel(std::string filename) {
 
 	std::ifstream f(filename);
 	if (!f.good()) {
@@ -101,7 +101,7 @@ void OpenCLFramework<T>::loadKernel(std::string filename) {
 }
 
 template<typename T>
-void OpenCLFramework<T>::addInputBuffer(int argumentCounter, std::vector<T> input) {
+void EasyOpenCL<T>::addInputBuffer(int argumentCounter, std::vector<T> input) {
 
 	if (vectorSize != -1 && vectorSize != input.size())  {
 		raiseError("You passed vectors with different lengths to the framework");
@@ -115,7 +115,7 @@ void OpenCLFramework<T>::addInputBuffer(int argumentCounter, std::vector<T> inpu
 }
 
 template<typename T>
-void OpenCLFramework<T>::addOutputBuffer(int argumentCounter) {
+void EasyOpenCL<T>::addOutputBuffer(int argumentCounter) {
 
 	if (vectorSize == -1)  {
 		raiseError("Please pass the input buffer first");
@@ -132,14 +132,14 @@ void OpenCLFramework<T>::addOutputBuffer(int argumentCounter) {
 }
 
 template<class T>
-void OpenCLFramework<T>::runKernel() {
+void EasyOpenCL<T>::runKernel() {
 	size_t global_work_size[1] = { vectorSize };
 	status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, global_work_size, NULL, 0, NULL, NULL);
 	checkError("clEnqueueNDRangeKernel");
 }
 
 template<typename T>
-std::vector<T> OpenCLFramework<T>::getOutputBuffer() {
+std::vector<T> EasyOpenCL<T>::getOutputBuffer() {
 
 	T* hostOutputBuffer = new T[vectorSize];
 	status = clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, vectorSize * sizeof(T), hostOutputBuffer, 0, NULL, NULL);
@@ -155,7 +155,7 @@ std::vector<T> OpenCLFramework<T>::getOutputBuffer() {
 }
 
 template<typename T>
-void OpenCLFramework<T>::showOutputBuffer() {
+void EasyOpenCL<T>::showOutputBuffer() {
 
 	std::vector<T> output = getOutputBuffer();
 
@@ -171,7 +171,7 @@ void OpenCLFramework<T>::showOutputBuffer() {
 }
 
 template<typename T>
-void OpenCLFramework<T>::cleanup() {
+void EasyOpenCL<T>::cleanup() {
 	status = clReleaseKernel(kernel);
 	checkError("clReleaseKernel");
 	status = clReleaseProgram(program);
@@ -197,7 +197,7 @@ void OpenCLFramework<T>::cleanup() {
 }
 
 template<typename T>
-void OpenCLFramework<T>::printDeviceProperty(cl_device_id device) {
+void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
 
 	/*
 	from: http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/
@@ -240,7 +240,7 @@ void OpenCLFramework<T>::printDeviceProperty(cl_device_id device) {
 }
 
 template<typename T>
-std::string OpenCLFramework<T>::getErrorString(cl_int err) {
+std::string EasyOpenCL<T>::getErrorString(cl_int err) {
 
 	//From: http://tom.scogland.com/blog/2013/03/29/opencl-errors/
 
@@ -297,6 +297,6 @@ std::string OpenCLFramework<T>::getErrorString(cl_int err) {
 	}
 }
 
-template class OpenCLFramework<char>;
-template class OpenCLFramework<int>;
-template class OpenCLFramework<float>;
+template class EasyOpenCL<char>;
+template class EasyOpenCL<int>;
+template class EasyOpenCL<float>;

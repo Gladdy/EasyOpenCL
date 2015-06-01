@@ -15,7 +15,7 @@ int main() {
 	}
 
 	try {
-		OpenCLFramework<int> framework (SHOW_DEBUG);
+		EasyOpenCL<int> framework (SHOW_DEBUG);
 
 		/*
 		DO NOT CALL YOUR FILE KERNEL.CL

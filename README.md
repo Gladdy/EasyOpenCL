@@ -48,6 +48,6 @@ make
 ```
 
 ### Thanks to:
-* elhigu for creating the FindOpenCL CMake module (https://github.com/elhigu/cmake-findopencl)
-* Tom Scogland for comprehensible OpenCL errors (http://tom.scogland.com/blog/2013/03/29/opencl-errors/)
-
+* Dhruba Bandopadhyay: [OpenCL Cookbook: Listing all devices and their critical attributes](http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/)
+* elhigu: [cmake-findopencl](https://github.com/elhigu/cmake-findopencl)
+* Tom Scogland: [OpenCL error checking](http://tom.scogland.com/blog/2013/03/29/opencl-errors/)

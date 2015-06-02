@@ -1,4 +1,4 @@
-# Visual Studio example project
+## Visual Studio example project
 You will need so set up the project before you can build and run this example. The confinguration still needs the include location for the OpenCL headers and the corresponding implementation library. These should be installed by your GPU driver.
 
 ### Finding the locations of the needed files
@@ -32,16 +32,16 @@ You'll need to get the path to the folder containing `CL/cl.h` for the include d
 Build and run the project (without debugger to prevent the console from closing immediately at the end) using `Ctrl-F5`. If you want to debug your project, set some breakpoints and use `F5`.
 
 ### Troubleshooting
-##### Unable to find the path to `OpenCL.lib` or `CL/cl.h`
+######  Unable to find the path to `OpenCL.lib` or `CL/cl.h`
 Make sure that you have installed an OpenCL-capable version of you graphics card driver. For AMD you'll need the AMD APP SDK (http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/). For NVIDIA, installing the CUDA-enabled drivers usually also installs OpenCL support.
 
-##### Visual Studio error C1083: 'Cannot open include file `CL/cl.h`'
+######  Visual Studio error C1083: 'Cannot open include file `CL/cl.h`'
 Make sure that the Include Directory has been specified correctly (step 5).
 
-##### Visual Studio error LNK1104: 'Cannot open file `OpenCL.lib`'
+######  Visual Studio error LNK1104: 'Cannot open file `OpenCL.lib`'
 Make sure that the Library Directory has been specified correctly (step 4).
 
-##### Visual Studio error LNK2015: Undefined functions
+######  Visual Studio error LNK2015: Undefined functions
 You did not specify that the linker should link against `OpenCL.lib` or you specified the wrong folder (ie. compiling a 32-bit program whilst linking against the 64-bit library). 
 
 

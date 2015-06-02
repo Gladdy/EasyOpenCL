@@ -33,9 +33,9 @@ catch (std::exception& e) {
 ### Getting started
 ###### Windows
 * Clone or download this repository
-* Open the example project in Visual Studio
-* Specify the proper include and library directories
-* Run the example using `Ctrl-F5`
+* Open the example project solution (`example/VC++2013/EasyOpenCL.sln`) in Visual Studio
+* Specify the proper include and library directories using the guide in the README.md
+* Build and run the example using `Ctrl-F5`
 
 ###### Linux and Mac
 ```

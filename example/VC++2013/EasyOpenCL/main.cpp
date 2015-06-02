@@ -15,7 +15,7 @@ int main() {
 	}
 
 	try {
-		OpenCLFramework<int> framework (SHOW_DEBUG);
+		OpenCLFramework<int> framework (false);
 
 		/*
 		DO NOT CALL YOUR FILE KERNEL.CL
@@ -30,8 +30,16 @@ int main() {
 		framework.addOutputBuffer(3);
 
 		framework.runKernel();
-
 		framework.showOutputBuffer();
+	
+	
+		for (int i = 0; i < 1000; i++) {
+			framework.addInputBuffer(i%3, in2);
+			framework.addInputBuffer((i+1)%3, in3);
+			framework.runKernel();
+			//framework.showOutputBuffer();
+		}
+	
 	}
 	catch (std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;

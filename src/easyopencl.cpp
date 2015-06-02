@@ -151,6 +151,8 @@ std::vector<T> EasyOpenCL<T>::getOutputBuffer() {
 		hostOutputVector.push_back(hostOutputBuffer[i]);
 	}
 
+  delete hostOutputBuffer;
+
 	return hostOutputVector;
 }
 

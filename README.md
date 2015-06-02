@@ -48,6 +48,6 @@ make
 ```
 
 ### Thanks to:
-* elhigu for creating the FindOpenCL CMake module: https://github.com/elhigu/cmake-findopencl
+* elhigu for creating the FindOpenCL CMake module (https://github.com/elhigu/cmake-findopencl)
 * Tom Scogland for comprehensible OpenCL errors (http://tom.scogland.com/blog/2013/03/29/opencl-errors/)
 

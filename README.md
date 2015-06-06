@@ -32,6 +32,8 @@ catch (std::exception& e) {
 
 ### Getting started
 ###### Windows
+For a more elaborate guide, follow `example/VC++2013/README.md`
+
 * Clone or download this repository
 * Open the example project solution (`example/VC++2013/EasyOpenCL.sln`) in Visual Studio
 * Specify the proper include and library directories using the guide in the README.md

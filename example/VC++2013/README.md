@@ -40,7 +40,7 @@ Build and run the project (without debugger to prevent the console from closing 
 
 ### Troubleshooting
 ######  Unable to find the path to `OpenCL.lib` or `CL/cl.h`
-Make sure that you have installed an OpenCL-capable version of you graphics card driver. For AMD you'll need the AMD APP SDK (http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/). For NVIDIA, installing the CUDA-enabled drivers usually also installs OpenCL support.
+Make sure that you have updated your graphics card driver and installed the proper OpenCL drivers.
 
 ######  Visual Studio error C1083: 'Cannot open include file `CL/cl.h`'
 Make sure that the Include Directory has been specified correctly (step 5).
@@ -51,6 +51,6 @@ Make sure that the Library Directory has been specified correctly (step 4).
 ######  Visual Studio error LNK2015: Undefined functions
 You did not specify that the linker should link against `OpenCL.lib` or you specified the wrong folder (ie. compiling a 32-bit program whilst linking against the 64-bit library). 
 
-###### `clCreateCommandQueueWithProperties` and `clCreateCommandQueue` 
+###### Errors related to `clCreateCommandQueueWithProperties` and `clCreateCommandQueue` 
 `clCreateCommandQueue` has been deprecated in favour of `clCreateCommandQueueWithProperties` in the OpenCL 2.0 specification. Some devices do not support OpenCL 2.0 yet and they still follow to the older (OpenCL 1.1 or OpenCL 1.2) specification which does not include the depreciation of `clCreateCommandQueue`. If you experience errors about these functions: missing declarations or being deprecated, try the other function. The arguments are the same.
 

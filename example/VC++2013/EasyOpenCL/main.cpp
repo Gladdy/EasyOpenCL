@@ -10,7 +10,7 @@ int main() {
 	std::vector<int> in2{ 123, 213, 121, 1231, 123 };
 	std::vector<int> in3;
 
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i <= 5; i++) {
 		in3.push_back(i); // {0, 1, 2, 3, 4, 5}
 	}
 
@@ -31,15 +31,6 @@ int main() {
 
 		framework.runKernel();
 		framework.showOutputBuffer();
-	
-	
-		for (int i = 0; i < 1000; i++) {
-			framework.addInputBuffer(i%3, in2);
-			framework.addInputBuffer((i+1)%3, in3);
-			framework.runKernel();
-			//framework.showOutputBuffer();
-		}
-	
 	}
 	catch (std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;

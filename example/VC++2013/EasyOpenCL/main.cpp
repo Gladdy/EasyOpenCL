@@ -10,8 +10,8 @@ int main() {
 	std::vector<int> in2{ 123, 213, 121, 1231, 123 };
 	std::vector<int> in3;
 
-	for (int i = 0; i <= 5; i++) {
-		in3.push_back(i); // {0, 1, 2, 3, 4, 5}
+	for (int i = 0; i < 5; i++) {
+		in3.push_back(i); // {0, 1, 2, 3, 4}
 	}
 
 	try {

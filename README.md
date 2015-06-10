@@ -31,6 +31,10 @@ catch (std::exception& e) {
 ```
 
 ### Getting started
+All platforms:
+* Update your graphics drivers
+* Install the drivers with OpenCL support (NVIDIA CUDA Toolkit or AMD APP SDK)
+
 ###### Windows
 For a more elaborate guide, follow `example/VC++2013/README.md`
 

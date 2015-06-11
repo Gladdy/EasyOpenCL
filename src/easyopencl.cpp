@@ -40,7 +40,7 @@ EasyOpenCL<T>::EasyOpenCL(bool printData) {
   //Try to get the GPU, if not available, take the CPU
   cl_uint numDevices = 0;
   status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &numDevices);
-  checkError("clGetDeviceIDs");
+  //checkError("clGetDeviceIDs");
 
   if (numDevices == 0)  //no GPU available.
   {
@@ -125,7 +125,7 @@ void EasyOpenCL<T>::addOutputBuffer(int argumentCounter) {
     raiseError("You have already set an output buffer");
   }
 
-  outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, vectorSize * sizeof(T), NULL, NULL);
+  outputBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, vectorSize * sizeof(T), NULL, NULL);
   status = clSetKernelArg(kernel, argumentCounter, sizeof(cl_mem), (void *)&outputBuffer);
   checkError("clSetKernelArg output");
   outputBufferSet = true;

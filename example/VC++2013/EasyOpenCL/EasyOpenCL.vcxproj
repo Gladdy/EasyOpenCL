@@ -85,6 +85,7 @@
     <None Include="arithmetic.cl" />
     <None Include="kernel.cl" />
     <None Include="kernelFunction.cl" />
+    <None Include="sum.cl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

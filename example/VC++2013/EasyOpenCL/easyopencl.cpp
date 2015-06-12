@@ -93,6 +93,11 @@ void OpenCLFramework<T>::loadKernel(std::string filename) {
 	checkError("clCreateProgramWithSource");
 
 	status = clBuildProgram(program, 1, devices, NULL, NULL, NULL);
+	if (status != CL_SUCCESS) {
+		char buffer[10240];
+		clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
+		std::cerr << buffer << std::endl;
+	}
 	checkError("clBuildProgram");
 	
 	kernelName = filename.substr(0, filename.find('.'));
@@ -115,6 +120,25 @@ void OpenCLFramework<T>::addInputBuffer(int argumentCounter, std::vector<T> inpu
 }
 
 template<typename T>
+void OpenCLFramework<T>::addVectorLength(int argumentCounter) {
+
+	if (vectorSize == -1)  {
+		raiseError("Please specify the vector length first by providing an input.");
+	}
+
+
+	status = clSetKernelArg(kernel, argumentCounter, sizeof(size_t), &vectorSize);
+	checkError("clSetKernelArg addVectorLength");
+}
+
+template<typename T>
+void OpenCLFramework<T>::addNumber(int argumentCounter, int num) {
+
+	status = clSetKernelArg(kernel, argumentCounter, sizeof(size_t), &num);
+	checkError("clSetKernelArg addNumber");
+}
+
+template<typename T>
 void OpenCLFramework<T>::addOutputBuffer(int argumentCounter) {
 
 	if (vectorSize == -1)  {
@@ -125,7 +149,7 @@ void OpenCLFramework<T>::addOutputBuffer(int argumentCounter) {
 		raiseError("You have already set an output buffer");
 	}
 
-	outputBuffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, vectorSize * sizeof(T), NULL, NULL);
+	outputBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, vectorSize * sizeof(T), NULL, NULL);
 	status = clSetKernelArg(kernel, argumentCounter, sizeof(cl_mem), (void *)&outputBuffer);
 	checkError("clSetKernelArg output");
 	outputBufferSet = true;

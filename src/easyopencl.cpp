@@ -93,6 +93,11 @@ void EasyOpenCL<T>::loadKernel(std::string filename) {
   checkError("clCreateProgramWithSource");
 
   status = clBuildProgram(program, 1, devices, NULL, NULL, NULL);
+  if(status != CL_SUCCESS) {
+    char buffer[10240];
+    clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
+    std::cerr << buffer << std::endl;
+  }
   checkError("clBuildProgram");
 
   kernelName = filename.substr(0, filename.find('.'));

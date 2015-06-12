@@ -17,6 +17,8 @@ public:
 	
 	void addInputBuffer(int,std::vector<T>);
 	void addOutputBuffer(int);
+	void addVectorLength(int);
+	void addNumber(int, int);
 	void runKernel();
 	std::vector<T> getOutputBuffer();
 	void showOutputBuffer();

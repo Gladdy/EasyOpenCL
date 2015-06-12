@@ -26,6 +26,7 @@
     <None Include="kernelFunction.cl" />
     <None Include="arithmetic.cl" />
     <None Include="kernel.cl" />
+    <None Include="sum.cl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="easyopencl.h">

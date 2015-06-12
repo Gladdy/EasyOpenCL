@@ -8,7 +8,7 @@ int main() {
 
 	std::vector<int> in3;
 
-	for (int i = 0; i < 4096; i++) {
+	for (int i = 0; i < 1024; i++) {
 		in3.push_back(1);
 	}
 

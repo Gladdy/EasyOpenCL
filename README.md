@@ -1,7 +1,6 @@
 ## EasyOpenCL
 
 ### Features:
-* A Visual Studio example project with guide on how to specify the include and library folders
 * CMake support for Linux and Mac
 * No exposed OpenCL or manual memory management calls, just the C++ STL.
 * Parametrized kernel types, choose from processing `float`s, `int`s or `char`s on your GPU.
@@ -10,23 +9,31 @@
 
 ### Overview: it's this easy!
 ```cpp
-std::vector<int> input_1 (5,5);
-std::vector<int> input_2 { 1, 2, 3, 4, 5 };
-
 try {
-    EasyOpenCL<int> framework (SHOW_DEBUG);
+  EasyOpenCL<int> framework (SHOW_DEBUG);
 
-    framework.loadKernel("arithmetic.cl");
-    framework.addInputBuffer(0, input_1);
-    framework.addInputBuffer(1, input_2);
-    framework.addOutputBuffer(2);
-	
-    framework.runKernel();
-	
-    framework.showOutputBuffer();
+  //Load a kernel function
+  framework.loadKernel("simplekernel.cl");
+
+  //Bind the inputs and outputs to the kernel function arguments
+  framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
+  framework.setSingleValue(1, 10);
+  framework.setOutputBuffer(2);
+
+  //Run the kernel and display the results
+  framework.runKernel();
+  framework.showAllValues();
 }
 catch (std::exception& e) {
-    std::cerr << "Error: " << e.what() << std::endl;
+  std::cerr << "Error: " << e.what() << std::endl;
+}
+```
+
+```c
+__kernel void simplekernel( __global int* input, const int singlevalue
+                          , __global int* output ) {
+  int i = get_global_id(0);
+  output[i] = input[i] * singlevalue;
 }
 ```
 
@@ -35,21 +42,13 @@ All platforms:
 * Update your graphics drivers
 * Install the drivers with OpenCL support (NVIDIA CUDA Toolkit or AMD APP SDK)
 
-###### Windows
-For a more elaborate guide, follow `example/VC++2013/README.md`
 
-* Clone or download this repository
-* Open the example project solution (`example/VC++2013/EasyOpenCL.sln`) in Visual Studio
-* Specify the proper include and library directories using the guide in the README.md
-* Build and run the example using `Ctrl-F5`
-
-###### Linux and Mac
 ```
 git clone https://github.com/Gladdy/EasyOpenCL.git
 cd EasyOpenCL
 mkdir build && cd build
 cmake ..
-make 
+make
 ./test
 ```
 

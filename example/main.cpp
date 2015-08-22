@@ -7,19 +7,12 @@
 
 int main() {
 
-	std::vector<float> input;
-
-	for(int i = 0; i < 8; i++) {
-		float f = static_cast <float> (rand()) / RAND_MAX;
-		input.push_back(f);
-	}
-
 	try {
-		EasyOpenCL<float> framework (SHOW_DEBUG);
-		framework.loadKernel("arithmetic.cl");
+		EasyOpenCL<int> framework (SHOW_DEBUG);
+		framework.loadKernel("simplekernel.cl");
 
-		framework.setInputBuffer(0, input);
-		framework.setInputBuffer(1, input);
+		framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
+		framework.setSingleValue(1, 10);
 		framework.setOutputBuffer(2);
 
 		framework.runKernel();
@@ -28,6 +21,4 @@ int main() {
 	catch (std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
 	}
-
-	return 0;
 }

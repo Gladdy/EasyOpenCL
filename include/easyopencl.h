@@ -5,6 +5,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
+#include "boundvalue.h"
 
 #define SHOW_DEBUG true
 #define NO_DEBUG false
@@ -13,13 +16,24 @@ template<class T>
 class EasyOpenCL {
 public:
 	EasyOpenCL(bool);
+
+	// Loading the kernel
 	void loadKernel(std::string);
 
-	void addInputBuffer(int,std::vector<T>);
-	void addOutputBuffer(int);
+	// Binding the values
+	void setInputBuffer(uint,std::vector<T>);
+	void setSingleValue(uint, T);
+	void setOutputBuffer(uint);
+
+	// Running the kernel
 	void runKernel();
-	std::vector<T> getOutputBuffer();
-	void showOutputBuffer();
+
+	// Retrieving the values
+	std::vector<T> getValue(uint);
+	void showValue(uint);
+	void showAllValues();
+
+	// Cleaning up afterwards
 	void cleanup();
 
 private:
@@ -29,20 +43,17 @@ private:
 	void checkError(std::string errorLocation);
 	std::string getErrorString(cl_int err);
 
+	std::string 			kernelName;
+	bool 							info;
+
+	cl_device_id* 		devices;
+	cl_int 						status;
+	cl_context 				context;
+	cl_command_queue 	commandQueue;
+	cl_kernel 				kernel;
+
 	size_t vectorSize = -1;
-	std::string kernelName;
-
-	bool info;
-	cl_device_id* devices;
-	cl_int	status;
-	cl_context context;
-	cl_command_queue commandQueue;
-	cl_program program;
-	cl_kernel kernel;
-
-	std::vector<cl_mem> inputBufferVector;
-	cl_mem outputBuffer;
-	bool outputBufferSet = false;
+	std::map<uint, BoundValue<T>> values;
 };
 
 #endif

@@ -1,4 +1,4 @@
-add_library (EasyOpenCL easyopencl.cpp)
+add_library (EasyOpenCL easyopencl.cpp boundvalue.cpp)
 target_include_directories (EasyOpenCL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(OpenCL REQUIRED)

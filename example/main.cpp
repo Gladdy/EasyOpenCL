@@ -3,35 +3,27 @@
 #include <iostream>
 #include <exception>
 #include <vector>
+#include <cstdlib>
 
 int main() {
 
-	std::vector<int> in1(5, 5);
-	std::vector<int> in2{ 123, 213, 121, 1231, 123 };
-	std::vector<int> in3;
+	std::vector<float> input;
 
-	for (int i = 0; i < 5; i++) {
-		in3.push_back(i); // {0, 1, 2, 3, 4}
+	for(int i = 0; i < 8; i++) {
+		float f = static_cast <float> (rand()) / RAND_MAX;
+		input.push_back(f);
 	}
 
 	try {
-		EasyOpenCL<int> framework (SHOW_DEBUG);
-
-		/*
-		DO NOT CALL YOUR FILE KERNEL.CL
-		The file name (minus extension) should be the same as the function name in the file.
-		If you call it "kernel.cl", the compiler gets confused as "kernel" is a reserved keyword in OpenCL-C.
-		*/
+		EasyOpenCL<float> framework (SHOW_DEBUG);
 		framework.loadKernel("arithmetic.cl");
 
-		framework.addInputBuffer(0, in1);
-		framework.addInputBuffer(1, in2);
-		framework.addInputBuffer(2, in3);
-		framework.addOutputBuffer(3);
+		framework.setInputBuffer(0, input);
+		framework.setInputBuffer(1, input);
+		framework.setOutputBuffer(2);
 
 		framework.runKernel();
-
-		framework.showOutputBuffer();
+		framework.showAllValues();
 	}
 	catch (std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;

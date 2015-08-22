@@ -1,15 +1,16 @@
 ## EasyOpenCL
 
-### Features:
-* CMake support for Linux and Mac
-* No exposed OpenCL or manual memory management calls, just the C++ STL.
-* Parametrized kernel types, choose from processing `float`s, `int`s or `char`s on your GPU.
-* Variable amount of input vectors
-* Human readable OpenCL errors for easy debugging of your program.
+### Features
+* No exposed low-level C, just the C++ STL - Focus on programming the GPU instead of messing about with long C-style OpenCL function calls and manual memory management.
+* CMake support for Linux and Mac - No more linking problems if you have installed the correct driver.
+* The kernel type is a template: choose from processing `float`s, `int`s or `char`s on your GPU.
+* Variable amount of input vectors, output vectors and scalars.
+* Human readable OpenCL errors for easy debugging of your program due to the already present error checks on every OpenCL call.
+* Includes an example of some slighly more advanced OpenCL to help you get started - computing the sum of a vector in logarithmic time (`example/sum.cl`)
 
 ### Overview: it's this easy!
 ```cpp
-// main.cpp
+// example/main.cpp
 try {
   EasyOpenCL<int> framework (SHOW_DEBUG);
 
@@ -19,7 +20,6 @@ try {
   //Bind the inputs and outputs to the kernel function arguments
   framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
   framework.setSingleValue(1, 10);
-  framework.setOutputBuffer(2);
 
   //Run the kernel and display the results
   framework.runKernel();
@@ -31,11 +31,11 @@ catch (std::exception& e) {
 ```
 
 ```c
-// simplekernel.cl
-__kernel void simplekernel( __global int* input, const int singlevalue
-                          , __global int* output ) {
-  int i = get_global_id(0);
-  output[i] = input[i] * singlevalue;
+// example/simplekernel.cl
+__kernel void simplekernel(	__global int* array, const int singlevalue )
+{
+	int i = get_global_id(0);
+	array[i] = array[i] * singlevalue;
 }
 ```
 
@@ -43,7 +43,6 @@ __kernel void simplekernel( __global int* input, const int singlevalue
 All platforms:
 * Update your graphics drivers
 * Install the drivers with OpenCL support (NVIDIA CUDA Toolkit or AMD APP SDK)
-
 
 ```
 git clone https://github.com/Gladdy/EasyOpenCL.git

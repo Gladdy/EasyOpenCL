@@ -9,6 +9,7 @@
 
 ### Overview: it's this easy!
 ```cpp
+// main.cpp
 try {
   EasyOpenCL<int> framework (SHOW_DEBUG);
 
@@ -30,6 +31,7 @@ catch (std::exception& e) {
 ```
 
 ```c
+// simplekernel.cl
 __kernel void simplekernel( __global int* input, const int singlevalue
                           , __global int* output ) {
   int i = get_global_id(0);

@@ -15,7 +15,7 @@ int main() {
 		framework.setSingleValue(1, 10);
 		framework.setOutputBuffer(2);
 
-		framework.runKernel();
+    framework.runKernel();
 		framework.showAllValues();
 	}
 	catch (std::exception& e) {

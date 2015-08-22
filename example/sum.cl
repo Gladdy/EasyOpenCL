@@ -14,6 +14,8 @@ __kernel void sum( __global int* array, const int length)
     dist = dist * 2;
     l = l / 2;
 
+    // Only allow the system to move on whenever all threads
+    // are at this location
     barrier(CLK_LOCAL_MEM_FENCE);
   }
 

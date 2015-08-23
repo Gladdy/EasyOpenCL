@@ -1,7 +1,7 @@
 #ifndef _BOUNDVALUE_
 #define _BOUNDVALUE_
 
-#include <CL/cl.h>
+#include "opencl-crossplatform.h"
 
 enum BoundValueType { CL_MEM, SCALAR };
 

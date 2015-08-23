@@ -13,7 +13,6 @@ int main() {
 
     framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
     framework.setSingleValue(1, 10);
-    framework.setOutputBuffer(2);
 
     framework.runKernel();
     framework.showAllValues();

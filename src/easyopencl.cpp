@@ -84,8 +84,14 @@ EasyOpenCL<T>::EasyOpenCL(bool printData) {
   context = clCreateContext(NULL, 1, devices, NULL, NULL, &status);
   checkError("clCreateContext");
 
-  commandQueue = clCreateCommandQueueWithProperties(context, devices[0], 0, &status);
-  checkError("clCreateCommandQueueWithProperties");
+
+  #ifdef CL_API_SUFFIX__VERSION_2_0
+    commandQueue = clCreateCommandQueueWithProperties(context, devices[0], 0, &status);
+    checkError("clCreateCommandQueueWithProperties");
+  #else
+    commandQueue = clCreateCommandQueue(context, devices[0], 0, &status);
+    checkError("clCreateCommandQueue");
+  #endif
 }
 
 /**

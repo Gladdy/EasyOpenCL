@@ -1,6 +1,5 @@
-__kernel void simplekernel(	__global int* input
-                          , const int singlevalue )
+__kernel void simplekernel(	__global int* array, const int singlevalue )
 {
 	int i = get_global_id(0);
-	output[i] = input[i] * singlevalue;
+	array[i] = array[i] * singlevalue;
 }

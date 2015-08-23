@@ -1,7 +1,7 @@
 #ifndef _EASYOPENCL_
 #define _EASYOPENCL_
 
-#include <CL/cl.h>
+#include "opencl-crossplatform.h"
 
 #include <string>
 #include <vector>

@@ -1,7 +1,11 @@
 #ifndef _BOUNDVALUE_
 #define _BOUNDVALUE_
 
-#include <CL/cl.h>
+#ifdef __APPLE__
+  #include <OpenCL/cl.h>
+#else
+  #include <CL/cl.h>
+#endif
 
 enum BoundValueType { CL_MEM, SCALAR };
 

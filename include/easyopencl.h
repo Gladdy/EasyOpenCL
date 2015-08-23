@@ -1,7 +1,14 @@
 #ifndef _EASYOPENCL_
 #define _EASYOPENCL_
 
-#include <CL/cl.h>
+#ifdef __APPLE__
+  #include <OpenCL/cl.h>
+  #define clCreateCommandQueueWithProperties clCreateCommandQueue
+#else
+  #include <CL/cl.h>
+#endif
+
+typedef unsigned int uint;
 
 #include <string>
 #include <vector>

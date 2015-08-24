@@ -17,8 +17,7 @@
  *          * If debug verbosity is enabled: print the selected device info
  *          * Create an OpenCL context and an OpenCL CommandQueue
  */
-template<class T>
-EasyOpenCL<T>::EasyOpenCL(bool printData) {
+EasyOpenCL::EasyOpenCL(bool printData) {
 
   info = printData;
   cl_uint numPlatforms;           //the NO. of platforms
@@ -81,15 +80,14 @@ EasyOpenCL<T>::EasyOpenCL(bool printData) {
   #endif
 }
 
-template<class T>
-Kernel& EasyOpenCL<T>::loadKernel(std::string id, std::string filename) {
+Kernel& EasyOpenCL::loadKernel(std::string id, std::string filename) {
 
   if(kernels.count(id) > 0) {
     raiseError("Identifier '" + id + "' already exists!");
   }
 
   //Store the kernel in the map
-  kernels.emplace(id, Kernel(id, context, devices, filename));
+  kernels.emplace(id, Kernel(id, context, commandQueue, devices, filename));
   return kernels[id];
 }
 
@@ -101,43 +99,11 @@ Kernel& EasyOpenCL<T>::loadKernel(std::string id, std::string filename) {
 /**
  * Run the kernel!
  */
-template<class T>
-void EasyOpenCL<T>::runKernel(std::string id) {
+void EasyOpenCL::runKernel(std::string id) {
 
   if (kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
-  /*
-  // Check whether the buffers specified have all been specified
-  cl_uint kernelNumArgs;
-  status = clGetKernelInfo(kernels.find(id)->second, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &kernelNumArgs, NULL);
 
-  // Get the kernel max work group size
-  size_t maxWorkGroupSize;
-  status = clGetKernelWorkGroupInfo(kernel, NULL, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWorkGroupSize, NULL);
-  std::cout << maxWorkGroupSize << std::endl;
-
-  std::vector<uint> argumentVector;
-  for(auto& kv : values) {
-    argumentVector.push_back(kv.first);
-  }
-
-  std::sort(argumentVector.begin(), argumentVector.end());
-
-  for(uint i = 0; i < kernelNumArgs; i++) {
-    if(i > (argumentVector.size()-1) || argumentVector[i] != i) {
-      raiseError("The buffers do not form a sequential set starting at 0: " + std::to_string(i) + " is missing");
-    }
-  }*/
-
-  // Create a global_work_size array
-  // This determines how many workers will execute the kernel
-  // If you set a single worker, the process will be sequential
-  // If you set too many workers, the OpenCL driver will be unable to function
-  size_t global_work_size[] = { vectorSize };
-  size_t local_work_size[] = { vectorSize };
-  status = clEnqueueNDRangeKernel(commandQueue, kernels.find(id)->second
-                                  , 1, NULL, global_work_size, local_work_size
-                                  , 0, NULL, NULL);
-  checkError("Running kernel");
+  kernels[id].runKernel();
 }
 
 
@@ -149,34 +115,31 @@ void EasyOpenCL<T>::runKernel(std::string id) {
  *
  * Output:  std::vector<T>        - containing the values of the argument
  */
-template<typename T>
-std::vector<T> EasyOpenCL<T>::getValue(uint argumentPosition) {
-
-}
+// std::vector<T> EasyOpenCL::getValue(uint argumentPosition) {
+//   return std::vector<T>();
+// }
 
 /**
  * Utility function for pretty-printing the contents of a buffer
  *
  * Input:   uint argumentPosition
  */
-template<typename T>
-void EasyOpenCL<T>::showValue(uint argumentPosition) {
+void EasyOpenCL::showValue(uint argumentPosition) {
 
-  std::vector<T> output = getValue(argumentPosition);
+  // std::vector<T> output = getValue(argumentPosition);
 
-  std::cout << "[ ";
-  for (unsigned i = 0; i < output.size(); i++) {
-    std::cout << output[i];
+  // std::cout << "[ ";
+  // for (unsigned i = 0; i < output.size(); i++) {
+  //   std::cout << output[i];
 
-    if (i != output.size() - 1) {
-      std::cout << ", ";
-    }
-  }
-  std::cout << " ]" << std::endl;
+  //   if (i != output.size() - 1) {
+  //     std::cout << ", ";
+  //   }
+  // }
+  // std::cout << " ]" << std::endl;
 }
 
-template<typename T>
-void EasyOpenCL<T>::showAllValues() {
+void EasyOpenCL::showAllValues() {
 
   // for(auto& kv : values) {
   //   std::cout << kv.first << " : ";
@@ -186,8 +149,7 @@ void EasyOpenCL<T>::showAllValues() {
 }
 
 
-template<typename T>
-void EasyOpenCL<T>::cleanup() {
+void EasyOpenCL::cleanup() {
 
   for (auto& kv : kernels) {
 
@@ -211,8 +173,7 @@ void EasyOpenCL<T>::cleanup() {
   }
 }
 
-template<typename T>
-void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
+void EasyOpenCL::printDeviceProperty(cl_device_id device) {
 
   /*
   from: http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/
@@ -254,7 +215,7 @@ void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
   printf("Parallel compute units: %d\n\n", maxComputeUnits);
 }
 
-template class EasyOpenCL<int>;
+//template class EasyOpenCL<int>;
 //template class EasyOpenCL<char>;
 //template class EasyOpenCL<float>;
 

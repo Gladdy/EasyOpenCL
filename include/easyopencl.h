@@ -14,7 +14,6 @@
 #define SHOW_DEBUG true
 #define NO_DEBUG false
 
-template<typename T>
 class EasyOpenCL : public ErrorHandler {
 	//friend class Kernel;
 public:
@@ -24,15 +23,15 @@ public:
 	Kernel& loadKernel(std::string, std::string);
 
 	// Binding the values
-	void setInputBuffer(std::string, uint,std::vector<T>);
-	void setSingleValue(std::string, uint, T);
-	void setOutputBuffer(std::string, uint);
+	//void setInputBuffer(std::string, uint,std::vector<T>);
+	//void setSingleValue(std::string, uint, T);
+	//void setOutputBuffer(std::string, uint);
 
 	// Running the kernel
 	void runKernel(std::string id);
 
 	// Retrieving the values
-	std::vector<T> getValue(uint);
+	//std::vector<T> getValue(uint);
 	void showValue(uint);
 	void showAllValues();
 

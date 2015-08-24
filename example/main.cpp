@@ -9,12 +9,12 @@ int main() {
 
   try {
     EasyOpenCL<int> framework (SHOW_DEBUG);
-    framework.loadKernel("simplekernel.cl");
+    Kernel k = framework.loadKernel("simple", "simplekernel.cl");
 
-    framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
-    framework.setSingleValue(1, 10);
+    framework.setInputBuffer("simple", 0, std::vector<int> {1, 2, 3, 4, 5});
+    framework.setSingleValue("simple", 1, 10);
 
-    framework.runKernel();
+    framework.runKernel("simple");
     framework.showAllValues();
   }
   catch (std::exception& e) {

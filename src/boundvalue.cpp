@@ -1,34 +1,50 @@
 #include "boundvalue.h"
 
-template<class T>
-BoundValue<T>::BoundValue(cl_mem val) {
+#include <cstring>
+
+BoundValue::BoundValue(cl_mem val) {
   cl_mem_value = val;
   type = CL_MEM;
 }
 
-template<class T>
-BoundValue<T>::BoundValue(T val) {
-  scalar_value = val;
+template<typename T>
+BoundValue::BoundValue(T val) {
+
   type = SCALAR;
+
+  if(scalarValue != nullptr) {
+    delete scalarValue;
+  }
+
+  scalarValue = new char[sizeof(T)];
+  std::memcpy(scalarValue, &val, sizeof(T));
 }
 
-template<class T>
-bool BoundValue<T>::isScalar() {
+BoundValue::~BoundValue() {
+  if(scalarValue != nullptr) {
+    delete scalarValue;
+  }
+}
+
+
+bool BoundValue::isScalar() {
   return (type == SCALAR);
 }
 
-template<class T>
-T BoundValue<T>::getScalarValue() {
-  return scalar_value;
+template<typename T>
+T BoundValue::getScalarValue() {
+
+  if(scalarValue == nullptr) {
+    raiseError("Scalar value has not been specified");
+  }
+
+  return (T)*scalarValue;
 }
 
-template<class T>
-BoundValue<T>::operator cl_mem() {
+BoundValue::operator cl_mem() {
   return cl_mem_value;
 }
 
+template BoundValue::BoundValue(int);
+template int BoundValue::getScalarValue<int>();
 
-
-template class BoundValue<char>;
-template class BoundValue<int>;
-template class BoundValue<float>;

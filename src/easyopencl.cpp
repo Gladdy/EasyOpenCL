@@ -1,25 +1,12 @@
 #include "easyopencl.h"
 
 #include <iostream>
-#include <exception>
-#include <stdexcept>
-#include <fstream>
+
 #include <sstream>
 #include <utility>
 #include <algorithm>
+#include <cstring>
 
-template<class T>
-void EasyOpenCL<T>::raiseError(std::string errorString) {
-  throw std::runtime_error(errorString.c_str());
-}
-
-template<class T>
-void EasyOpenCL<T>::checkError(std::string errorLocation) {
-  if (status != CL_SUCCESS)
-  {
-    raiseError(errorLocation + '\t' + getErrorString(status));
-  }
-}
 /**
  * Construct an EasyOpenCL object
  *
@@ -94,132 +81,18 @@ EasyOpenCL<T>::EasyOpenCL(bool printData) {
   #endif
 }
 
-/**
- * Load the kernel from disk
- *
- * Input:   std::string filename
- * Output:  void
- *
- * Effect:  * Reads the file specified by the input filename into a string
- *          * Create a cl_program object from the source and build it
- *          * Create a kernel from the compiled code and store it
- */
 template<class T>
-void EasyOpenCL<T>::loadKernel(std::string filename) {
+Kernel& EasyOpenCL<T>::loadKernel(std::string id, std::string filename) {
 
-  //Open the file
-  std::ifstream f(filename);
-  if (!f.good()) {
-    raiseError("Unable to open kernel file: " + filename);
+  if(kernels.count(id) > 0) {
+    raiseError("Identifier '" + id + "' already exists!");
   }
 
-  //Store the file contents as a std::string using a std::stringstream
-  std::stringstream buffer;
-  buffer << f.rdbuf();
-  std::string fileContents = buffer.str();
-
-  //Convert the std::string to a C-style string for the OpenCL program creation
-  const char *source = fileContents.c_str();
-  size_t sourceSize = fileContents.length();
-
-  //Create a cl_program object from the source code string
-  cl_program program;
-  program = clCreateProgramWithSource(context, 1, &source, &sourceSize, &status);
-  checkError("clCreateProgramWithSource");
-
-  //Build the program file into an object file
-  status = clBuildProgram(program, 1, devices, NULL, NULL, NULL);
-
-  //On failure, allocate a buffer, fill it with the error message and display it
-  if(status != CL_SUCCESS) {
-    char buffer[10240];
-    clGetProgramBuildInfo(program, devices[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
-    std::cerr << buffer << std::endl;
-  }
-  checkError("clBuildProgram");
-
-  // Create a kernel from the built program
-  // The kernel name is the same as the filename, without the extension
-  // This name should match the entry function in the file
-  kernelName = filename.substr(0, filename.find('.'));
-  kernel = clCreateKernel(program, kernelName.c_str(), &status);
-  if(status != CL_SUCCESS) {
-    std::cerr << "Make sure that the name of the entry function in '"
-              << filename << "'' is equal to '"
-              << kernelName << "'." << std::endl;
-  }
-  checkError("clCreateKernel");
-
-  // Clean up the object files of the program now we have obtained the kernel
-  status = clReleaseProgram(program);
-  checkError("clReleaseProgram");
+  //Store the kernel in the map
+  kernels.emplace(id, Kernel(id, context, devices, filename));
+  return kernels[id];
 }
 
-/******************************************************************************/
-//  BINDING VALUES TO THE BUFFERS
-/******************************************************************************/
-
-/**
- * Add an input buffer to the kernel
- *
- * Input:   int argumentPosition  - the position of the argument
- *          std::vector<T> input  - the values of the kernel input
- */
-template<typename T>
-void EasyOpenCL<T>::setInputBuffer(uint argumentPosition, std::vector<T> input) {
-
-  // Make sure that all input vectors have the same length
-  // This allows for easier kernel writing but might be inefficient
-  // For passing single values to a kernel, just add another buffer and place
-  // the values in the vector and access them normally
-  if (vectorSize != -1 && vectorSize != input.size())  {
-    raiseError("You passed vectors with different lengths to the framework");
-  }
-  vectorSize = input.size();
-
-  // Create the actual input buffer at the designated postion
-  // Getting the values from the vector involves from C-style hacking
-  // It passes a pointer to the first element in the vector - so this does assume
-  // that all elements are sequentially aligned in memory
-  cl_mem inputBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, vectorSize * sizeof(T), (void *)&input[0], NULL);
-  status = clSetKernelArg(kernel, argumentPosition, sizeof(cl_mem), (void *)&inputBuffer);
-  checkError("clSetKernelArg input " + std::to_string(argumentPosition));
-
-  // Add the buffer to the map for later reference - retrieval and cleanup
-  values[argumentPosition] = BoundValue<T>(inputBuffer);
-}
-
-/**
- * Add an output buffer to the kernel
- *
- * Input:   int argumentPosition  - the position of the argument
- */
-template<typename T>
-void EasyOpenCL<T>::setOutputBuffer(uint argumentPosition) {
-
-  // The program needs to know the length of the buffer - therefore, first pass
-  // an input buffer so the length can be determined
-  if (vectorSize == -1)  { raiseError("Please pass the input buffer first"); }
-
-  // Create and append the actual output buffer
-  cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, vectorSize * sizeof(T), NULL, NULL);
-  status = clSetKernelArg(kernel, argumentPosition, sizeof(cl_mem), (void *)&outputBuffer);
-  checkError("clSetKernelArg outputBuffer " + std::to_string(argumentPosition));
-
-  // Add the buffer to the map for later reference - retrieval and cleanup
-  values[argumentPosition] = BoundValue<T>(outputBuffer);
-}
-
-template<typename T>
-void EasyOpenCL<T>::setSingleValue(uint argumentPosition, T value) {
-
-  // See setInputBuffer comments
-  status = clSetKernelArg(kernel, argumentPosition, sizeof(T), &value);
-  checkError("clSetKernelArg singleValue " + std::to_string(argumentPosition));
-
-  // Add the buffer to the map for later reference - retrieval and cleanup
-  values[argumentPosition] = BoundValue<T>(value);
-}
 
 /******************************************************************************/
 //  EXECUTING THE KERNEL
@@ -229,16 +102,18 @@ void EasyOpenCL<T>::setSingleValue(uint argumentPosition, T value) {
  * Run the kernel!
  */
 template<class T>
-void EasyOpenCL<T>::runKernel() {
+void EasyOpenCL<T>::runKernel(std::string id) {
 
+  if (kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
+  /*
   // Check whether the buffers specified have all been specified
   cl_uint kernelNumArgs;
-  status = clGetKernelInfo(kernel, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &kernelNumArgs, NULL);
+  status = clGetKernelInfo(kernels.find(id)->second, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &kernelNumArgs, NULL);
 
   // Get the kernel max work group size
-  // size_t maxWorkGroupSize;
-  // status = clGetKernelWorkGroupInfo(kernel, NULL, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWorkGroupSize, NULL);
-  // std::cout << maxWorkGroupSize << std::endl;
+  size_t maxWorkGroupSize;
+  status = clGetKernelWorkGroupInfo(kernel, NULL, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWorkGroupSize, NULL);
+  std::cout << maxWorkGroupSize << std::endl;
 
   std::vector<uint> argumentVector;
   for(auto& kv : values) {
@@ -247,11 +122,11 @@ void EasyOpenCL<T>::runKernel() {
 
   std::sort(argumentVector.begin(), argumentVector.end());
 
-  // for(uint i = 0; i < kernelNumArgs; i++) {
-  //   if(i > (argumentVector.size()-1) || argumentVector[i] != i) {
-  //     raiseError("The buffers do not form a sequential set starting at 0: " + std::to_string(i) + " is missing");
-  //   }
-  // }
+  for(uint i = 0; i < kernelNumArgs; i++) {
+    if(i > (argumentVector.size()-1) || argumentVector[i] != i) {
+      raiseError("The buffers do not form a sequential set starting at 0: " + std::to_string(i) + " is missing");
+    }
+  }*/
 
   // Create a global_work_size array
   // This determines how many workers will execute the kernel
@@ -259,7 +134,9 @@ void EasyOpenCL<T>::runKernel() {
   // If you set too many workers, the OpenCL driver will be unable to function
   size_t global_work_size[] = { vectorSize };
   size_t local_work_size[] = { vectorSize };
-  status = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, global_work_size, local_work_size, 0, NULL, NULL);
+  status = clEnqueueNDRangeKernel(commandQueue, kernels.find(id)->second
+                                  , 1, NULL, global_work_size, local_work_size
+                                  , 0, NULL, NULL);
   checkError("Running kernel");
 }
 
@@ -275,40 +152,6 @@ void EasyOpenCL<T>::runKernel() {
 template<typename T>
 std::vector<T> EasyOpenCL<T>::getValue(uint argumentPosition) {
 
-  // Check whether the argument was actually part of the kernel
-  typename std::map<uint,BoundValue<T>>::iterator it;
-  it = values.find(argumentPosition);
-  if(it == values.end()) {
-    raiseError("The buffer at position " + std::to_string(argumentPosition) + " could not be retrieved");
-  }
-
-  std::vector<T> hostOutputVector;
-
-  if(it->second.isScalar()) {
-    hostOutputVector.push_back(it->second.getScalarValue());
-  }
-  else
-  {
-    // Allocate a buffer which can hold the results
-    // Copy the values into said buffer
-    T* hostOutputBuffer = new T[vectorSize];
-    status = clEnqueueReadBuffer(commandQueue, it->second, CL_TRUE, 0, vectorSize * sizeof(T), hostOutputBuffer, 0, NULL, NULL);
-    if (status != CL_SUCCESS) {
-      //Clean up the buffer and raise an error if something went wrong
-      delete hostOutputBuffer;
-      raiseError("clEnqueueReadBuffer" + '\t' + getErrorString(status));
-    }
-
-    // Create the final result vector
-    // Element by element - copy the values into the vector
-    hostOutputVector.reserve(vectorSize);
-    for (unsigned i = 0; i < vectorSize; i++) {
-      hostOutputVector.push_back(hostOutputBuffer[i]);
-    }
-    delete hostOutputBuffer;
-  }
-
-  return hostOutputVector;
 }
 
 /**
@@ -334,21 +177,26 @@ void EasyOpenCL<T>::showValue(uint argumentPosition) {
 
 template<typename T>
 void EasyOpenCL<T>::showAllValues() {
-  for(auto& kv : values) {
-    std::cout << kv.first << " : ";
-    showValue(kv.first);
-  }
+
+  // for(auto& kv : values) {
+  //   std::cout << kv.first << " : ";
+  //   showValue(kv.first);
+  // }
+
 }
 
 
 template<typename T>
 void EasyOpenCL<T>::cleanup() {
-  status = clReleaseKernel(kernel);
-  checkError("clReleaseKernel");
 
-  for (auto& kv : values) {
-    status = clReleaseMemObject(kv.second);
-    checkError("clReleaseMemObject");
+  for (auto& kv : kernels) {
+
+    Kernel& kernel = kv.second;
+
+    status = clReleaseKernel(kernel);
+    checkError("clReleaseKernel");
+
+    kernel.releaseMemObjects();
   }
 
   status = clReleaseCommandQueue(commandQueue);
@@ -406,65 +254,7 @@ void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
   printf("Parallel compute units: %d\n\n", maxComputeUnits);
 }
 
-template<typename T>
-std::string EasyOpenCL<T>::getErrorString(cl_int err) {
-
-  //From: http://tom.scogland.com/blog/2013/03/29/opencl-errors/
-
-  switch (err){
-  case 0: return "CL_SUCCESS";
-  case -1: return "CL_DEVICE_NOT_FOUND";
-  case -2: return "CL_DEVICE_NOT_AVAILABLE";
-  case -3: return "CL_COMPILER_NOT_AVAILABLE";
-  case -4: return "CL_MEM_OBJECT_ALLOCATION_FAILURE";
-  case -5: return "CL_OUT_OF_RESOURCES";
-  case -6: return "CL_OUT_OF_HOST_MEMORY";
-  case -7: return "CL_PROFILING_INFO_NOT_AVAILABLE";
-  case -8: return "CL_MEM_COPY_OVERLAP";
-  case -9: return "CL_IMAGE_FORMAT_MISMATCH";
-  case -10: return "CL_IMAGE_FORMAT_NOT_SUPPORTED";
-  case -11: return "CL_BUILD_PROGRAM_FAILURE";
-  case -12: return "CL_MAP_FAILURE";
-
-  case -30: return "CL_INVALID_VALUE";
-  case -31: return "CL_INVALID_DEVICE_TYPE";
-  case -32: return "CL_INVALID_PLATFORM";
-  case -33: return "CL_INVALID_DEVICE";
-  case -34: return "CL_INVALID_CONTEXT";
-  case -35: return "CL_INVALID_QUEUE_PROPERTIES";
-  case -36: return "CL_INVALID_COMMAND_QUEUE";
-  case -37: return "CL_INVALID_HOST_PTR";
-  case -38: return "CL_INVALID_MEM_OBJECT";
-  case -39: return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
-  case -40: return "CL_INVALID_IMAGE_SIZE";
-  case -41: return "CL_INVALID_SAMPLER";
-  case -42: return "CL_INVALID_BINARY";
-  case -43: return "CL_INVALID_BUILD_OPTIONS";
-  case -44: return "CL_INVALID_PROGRAM";
-  case -45: return "CL_INVALID_PROGRAM_EXECUTABLE";
-  case -46: return "CL_INVALID_KERNEL_NAME";
-  case -47: return "CL_INVALID_KERNEL_DEFINITION";
-  case -48: return "CL_INVALID_KERNEL";
-  case -49: return "CL_INVALID_ARG_INDEX";
-  case -50: return "CL_INVALID_ARG_VALUE";
-  case -51: return "CL_INVALID_ARG_SIZE";
-  case -52: return "CL_INVALID_KERNEL_ARGS";
-  case -53: return "CL_INVALID_WORK_DIMENSION";
-  case -54: return "CL_INVALID_WORK_GROUP_SIZE";
-  case -55: return "CL_INVALID_WORK_ITEM_SIZE";
-  case -56: return "CL_INVALID_GLOBAL_OFFSET";
-  case -57: return "CL_INVALID_EVENT_WAIT_LIST";
-  case -58: return "CL_INVALID_EVENT";
-  case -59: return "CL_INVALID_OPERATION";
-  case -60: return "CL_INVALID_GL_OBJECT";
-  case -61: return "CL_INVALID_BUFFER_SIZE";
-  case -62: return "CL_INVALID_MIP_LEVEL";
-  case -63: return "CL_INVALID_GLOBAL_WORK_SIZE";
-  default: return "Unknown OpenCL error";
-  }
-}
-
-template class EasyOpenCL<char>;
 template class EasyOpenCL<int>;
-template class EasyOpenCL<float>;
+//template class EasyOpenCL<char>;
+//template class EasyOpenCL<float>;
 

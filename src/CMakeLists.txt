@@ -1,4 +1,4 @@
-add_library (EasyOpenCL easyopencl.cpp boundvalue.cpp)
+add_library (EasyOpenCL easyopencl.cpp boundvalue.cpp kernel.cpp errorhandler.cpp)
 target_include_directories (EasyOpenCL PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_package(OpenCL REQUIRED)

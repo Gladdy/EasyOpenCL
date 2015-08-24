@@ -1,4 +1,5 @@
 ## EasyOpenCL
+### Beware - the multikernel branch is in active development - not for use yet
 
 ### Features
 * No exposed low-level C, just the C++ STL - Focus on programming the GPU instead of messing about with long C-style OpenCL function calls and manual memory management.

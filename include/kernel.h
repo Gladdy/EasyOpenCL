@@ -9,27 +9,31 @@
 #include <map>
 #include <vector>
 
+template<typename T>
 class Kernel : public ErrorHandler {
-  //friend class EasyOpenCL;
+
+  template <typename> friend class EasyOpenCL;
+
 public:
   Kernel() {}
-  Kernel(std::string, cl_context&, cl_command_queue&
-        , cl_device_id*, std::string);
+  Kernel(std::string
+        , cl_context&
+        , cl_command_queue&
+        , cl_device_id*
+        , std::string);
   operator cl_kernel();
 
 
   /*******************************************************/
   //  BINDING VALUES TO THE BUFFERS
   /*******************************************************/
-  template<typename T>
-  void setInputBuffer(uint, std::vector<T>);
+  void bindInput(uint, std::vector<T>);
+  void bindOutput(uint, uint);
 
-  template<typename T>
-  void setOutputBuffer(uint, uint);
+  template<typename S>
+  void bindScalar(uint, S value);
 
-  template<typename T>
-  void setSingleValue(uint, T value);
-
+  void bindPromise(uint);
 
   /*******************************************************/
   //  RUNNING A KERNEL
@@ -40,9 +44,9 @@ public:
   /*******************************************************/
   //  RETRIEVING VALUES FROM THE BUFFERS
   /*******************************************************/
-  template<typename T>
-  std::vector<T> getValue(uint);
-
+  std::vector<T> getBuffer(uint);
+  void showBuffer(uint);
+  void showBuffers();
 
   /*******************************************************/
   //  CLEANING UP
@@ -51,9 +55,19 @@ public:
 
 private:
 
-  std::map<uint, BoundValue> boundValues;
+  /*******************************************************/
+  //  CONTROLLING THE BOUNDVALUE MAPS
+  /*******************************************************/
+  void erase(uint);
+  void putBoundScalar(uint, const BoundScalar&&);
+  void putBoundBuffer(uint, const BoundBuffer&&);
+  void putBoundPromise(uint, const BoundPromise<T>&&);
+  std::map<uint, BoundScalar> boundScalars;
+  std::map<uint, BoundBuffer> boundBuffers;
+  std::map<uint, BoundPromise<T>> boundPromises;
+
   std::string id;
-  size_t vectorSize = 0;
+  size_t vectorSize = 5;
 
   cl_kernel kernel;
   cl_context context;

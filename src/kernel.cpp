@@ -15,7 +15,8 @@
  *          * Create a cl_program object from the source and build it
  *          * Create a kernel from the compiled code and store it
  */
-Kernel::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename) {
+template<typename T>
+Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename) {
 
   //Assign the captured variables
   id = id_;
@@ -74,7 +75,6 @@ Kernel::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQ
 /******************************************************************************/
 //  BINDING VALUES TO THE BUFFERS
 /******************************************************************************/
-
 /**
  * Add an input buffer to the kernel
  *
@@ -82,21 +82,11 @@ Kernel::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQ
  *          std::vector<T> input  - the boundValues of the kernel input
  */
 template<typename T>
-void Kernel::setInputBuffer(uint argPos, std::vector<T> input) {
+void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
 
   if(input.size() > vectorSize) {
     vectorSize = input.size();
   }
-
-  // Make sure that all input vectors have the same length
-  // This allows for easier kernel writing but might be inefficient
-  // For passing single boundValues to a kernel, just add another buffer and place
-  // the boundValues in the vefctor and access them normally
-  // if (vectorSize != -1 && vectorSize != input.size())  {
-  //   raiseError("You passed vectors with different lengths to the framework");
-  // }
-  // vectorSize = input.size();
-  // if (vectorSize == -1)  { raiseError("Please pass the input buffer first"); }
 
   // Create the actual input buffer at the designated postion
   // Getting the boundValues from the vector involves from C-style hacking
@@ -116,7 +106,8 @@ void Kernel::setInputBuffer(uint argPos, std::vector<T> input) {
   checkError("clSetKernelArg input " + std::to_string(argPos));
 
   // Add the buffer to the map for later reference - retrieval and cleanup
-  boundValues.emplace(argPos, BoundValue(inputBuffer, input.size()));
+  erase(argPos);
+  boundBuffers.emplace(argPos, BoundBuffer(inputBuffer, input.size()));
 }
 
 /**
@@ -125,7 +116,7 @@ void Kernel::setInputBuffer(uint argPos, std::vector<T> input) {
  * Input:   int argPos  - the position of the argument
  */
 template<typename T>
-void Kernel::setOutputBuffer(uint argPos, uint bufferSize) {
+void Kernel<T>::bindOutput(uint argPos, uint bufferSize) {
 
   // The program needs to know the length of the buffer - therefore, first pass
   // an input buffer so the length can be determined
@@ -138,26 +129,45 @@ void Kernel::setOutputBuffer(uint argPos, uint bufferSize) {
   checkError("clSetKernelArg outputBuffer " + std::to_string(argPos));
 
   // Add the buffer to the map for later reference - retrieval and cleanup
-  boundValues.emplace(argPos, BoundValue(outputBuffer, bufferSize));
+  erase(argPos);
+  boundBuffers.emplace(argPos, BoundBuffer(outputBuffer, bufferSize));
 }
 
 template<typename T>
-void Kernel::setSingleValue(uint argPos, T value) {
-
-  //if(kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
+template<typename S>
+void Kernel<T>::bindScalar(uint argPos, S value) {
 
   // See setInputBuffer comments
-  status = clSetKernelArg(kernel, argPos, sizeof(T), &value);
+  status = clSetKernelArg(kernel, argPos, sizeof(S), &value);
   checkError("clSetKernelArg singleValue " + std::to_string(argPos));
 
   // Add the buffer to the map for later reference - retrieval and cleanup
-  boundValues.emplace(argPos, BoundValue(value));
+  erase(argPos);
+  boundScalars.emplace(argPos, BoundScalar(value));
+}
+
+template<typename T>
+void Kernel<T>::bindPromise(uint argPos) {
+  erase(argPos);
+  boundPromises.emplace(argPos, BoundPromise<T>(this));
+}
+
+
+/******************************************************************************/
+//  MANAGING THE BOUNDVALUE MAPS
+/******************************************************************************/
+template<typename T>
+void Kernel<T>::erase(uint argPos) {
+  boundScalars.erase(argPos);
+  boundBuffers.erase(argPos);
+  boundPromises.erase(argPos);
 }
 
 /*******************************************************/
 //  RUNNING A KERNEL
 /*******************************************************/
-void Kernel::runKernel() {
+template<typename T>
+void Kernel<T>::runKernel() {
   /*
   // Check whether the buffers specified have all been specified
   cl_uint kernelNumArgs;
@@ -208,76 +218,105 @@ void Kernel::runKernel() {
 /*******************************************************/
 //  RETRIEVING VALUES FROM THE BUFFERS
 /*******************************************************/
+/**
+ * Retrieve a value after running the kernel
+ *
+ * Input:   uint argumentPosition - which argument should be fetched?
+ *
+ * Output:  std::vector<T>        - containing the values of the argument
+ */
 template<typename T>
-std::vector<T> Kernel::getValue(uint argPos) {
+std::vector<T> Kernel<T>::getBuffer(uint argPos) {
 
   // Check whether the argument was actually part of the kernel
-  //typename std::map<uint,BoundValue>::iterator it;
-
-  auto it = boundValues.find(argPos);
-  if(it == boundValues.end()) {
+  auto it = boundBuffers.find(argPos);
+  if(it == boundBuffers.end()) {
     raiseError("The buffer at position " + std::to_string(argPos) + " could not be retrieved");
   }
 
-  BoundValue& boundValue = it->second;
-  std::vector<T> hostVector {};
+  BoundBuffer& boundBuffer = it->second;
 
-  if(boundValue.isScalar())
-  {
-    //Simply insert the scalar into the empty vector
-    hostVector.push_back(boundValue.getScalarValue<T>());
-  }
-  else
-  {
-    // Allocate a buffer which can hold the results from the OpenCL device
-    uint vectorSize = boundValue.getVectorSize();
-    T* hostBuffer = new T[vectorSize];
+  // Allocate a buffer which can hold the results from the OpenCL device
+  uint size = boundBuffer.getSize();
+  T* hostBuffer = new T[size];
 
-    // Read the values from the OpenCL device into the buffer
-    status = clEnqueueReadBuffer(   commandQueue
-              , boundValue
-              , CL_TRUE
-              , 0
-              , vectorSize * sizeof(T)
-              , hostBuffer
-              , 0
-              , NULL
-              , NULL );
+  // Read the values from the OpenCL device into the buffer
+  status = clEnqueueReadBuffer( commandQueue
+            , boundBuffer
+            , CL_TRUE
+            , 0
+            , size * sizeof(T)
+            , hostBuffer
+            , 0
+            , NULL
+            , NULL );
 
-    //Clean up the buffer and raise an error if something went wrong
-    if (status != CL_SUCCESS) {
-      delete hostBuffer;
-      raiseError("clEnqueueReadBuffer" + '\t' + getErrorString(status));
-    }
-
-    // Element by element - copy the boundValues into the vector
-    hostVector.reserve(vectorSize);
-
-    for (unsigned i = 0; i < vectorSize; i++) {
-      hostVector.push_back(hostBuffer[i]);
-    }
-
-    //Clean up the hostBuffer
+  //Clean up the buffer and raise an error if something went wrong
+  if (status != CL_SUCCESS) {
     delete hostBuffer;
-
+    raiseError("clEnqueueReadBuffer" + '\t' + getErrorString(status));
   }
 
+  // Element by element - copy the boundValues into the vector
+  std::vector<T> hostVector {};
+  hostVector.reserve(size);
+
+  for (unsigned i = 0; i < size; i++) {
+    hostVector.push_back(hostBuffer[i]);
+  }
+
+  //Clean up the hostBuffer
+  delete hostBuffer;
   return hostVector;
 }
 
-void Kernel::releaseMemObjects() {
-  for (auto& kv : boundValues) {
+/**
+ * Utility function for pretty-printing the contents of a buffer
+ *
+ * Input:   uint argumentPosition
+ */
+template<typename T>
+void Kernel<T>::showBuffer(uint argPos) {
+
+  std::vector<T> output = getBuffer(argPos);
+
+  std::cout << "[ ";
+  for (unsigned i = 0; i < output.size(); i++) {
+    std::cout << output[i];
+
+    if (i != output.size() - 1) {
+      std::cout << ", ";
+    }
+  }
+  std::cout << " ]" << std::endl;
+}
+
+/**
+ * Utility function for pretty-printing the contents of a buffer
+ *
+ * Input:   uint argumentPosition
+ */
+template<typename T>
+void Kernel<T>::showBuffers() {
+  for(auto& kv : boundBuffers) {
+    std::cout << kv.first << " : ";
+    showBuffer(kv.first);
+  }
+}
+
+template<typename T>
+void Kernel<T>::releaseMemObjects() {
+  for (auto& kv : boundBuffers) {
     status = clReleaseMemObject(kv.second);
     checkError("clReleaseMemObject");
   }
 }
 
-Kernel::operator cl_kernel() {
+template<typename T>
+Kernel<T>::operator cl_kernel() {
   return kernel;
 }
 
 
-template void Kernel::setInputBuffer<int>(uint, std::vector<int>);
-template void Kernel::setOutputBuffer<int>(uint, uint);
-template void Kernel::setSingleValue<int>(uint,int);
-template std::vector<int> Kernel::getValue<int>(uint);
+template class Kernel<int>;
+template void Kernel<int>::bindScalar<int>(uint,int);

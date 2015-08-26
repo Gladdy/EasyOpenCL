@@ -1,4 +1,6 @@
 #include "easyopencl.h"
+#include "boundvalue.h"
+
 
 #include <iostream>
 #include <exception>
@@ -8,21 +10,19 @@
 int main() {
 
   try {
-    EasyOpenCL framework (SHOW_DEBUG);
-    Kernel& simple = framework.loadKernel("simple", "simplekernel.cl");
+    EasyOpenCL<int> framework (SHOW_DEBUG);
 
-    simple.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
-    simple.setSingleValue(1, 1000000);
+    auto& square = framework.load("square");
+    auto& aggregate = framework.load("aggregate");
 
-    std::vector<int> v = simple.getValue<int>(1);
-    std::cout << v[0] << std::endl;
+    square.bindInput(0, std::vector<int> {1, 5, 3, 2, 4, 5});
+    aggregate.bindInput(0, std::vector<int> {1, 1, 2, 3, 5, 8});
+    aggregate.bindOutput(2, 6);
 
-    //framework.runKernel("simple");
-    //framework.showAllValues();
+    framework.link(square, aggregate, {{1,1}});
 
-    //framework.cleanup();
+    framework.evaluate("aggregate");
 
-    std::cout << "Program finished" << std::endl;
   }
   catch (std::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;

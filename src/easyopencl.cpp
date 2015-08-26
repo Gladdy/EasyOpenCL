@@ -17,7 +17,8 @@
  *          * If debug verbosity is enabled: print the selected device info
  *          * Create an OpenCL context and an OpenCL CommandQueue
  */
-EasyOpenCL::EasyOpenCL(bool printData) {
+template<typename T>
+EasyOpenCL<T>::EasyOpenCL(bool printData) {
 
   info = printData;
   cl_uint numPlatforms;           //the NO. of platforms
@@ -80,80 +81,52 @@ EasyOpenCL::EasyOpenCL(bool printData) {
   #endif
 }
 
-Kernel& EasyOpenCL::loadKernel(std::string id, std::string filename) {
+template<typename T>
+Kernel<T>& EasyOpenCL<T>::load(std::string id) {
 
-  if(kernels.count(id) > 0) {
+  if(kernels.count(id)) {
     raiseError("Identifier '" + id + "' already exists!");
   }
 
   //Store the kernel in the map
-  kernels.emplace(id, Kernel(id, context, commandQueue, devices, filename));
+  kernels.emplace(id, Kernel<T>(id, context, commandQueue, devices, id + ".cl"));
   return kernels[id];
 }
 
+/******************************************************************************/
+//  LINKING KERNELS
+/******************************************************************************/
+template<typename T>
+void EasyOpenCL<T>::link( Kernel<T>& source
+                        , Kernel<T>& target
+                        , std::map<uint,uint> links) {
+
+}
 
 /******************************************************************************/
-//  EXECUTING THE KERNEL
+//  EVALUATING
 /******************************************************************************/
 
 /**
- * Run the kernel!
+ * Evaluate a kernel based on the links that went before
  */
-void EasyOpenCL::runKernel(std::string id) {
+template<typename T>
+void EasyOpenCL<T>::evaluate(std::string id) {
 
   if (kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
 
   kernels[id].runKernel();
 }
 
-
-
-/**
- * Retrieve a value after running the kernel
- *
- * Input:   uint argumentPosition - which argument should be fetched?
- *
- * Output:  std::vector<T>        - containing the values of the argument
- */
-// std::vector<T> EasyOpenCL::getValue(uint argumentPosition) {
-//   return std::vector<T>();
-// }
-
-/**
- * Utility function for pretty-printing the contents of a buffer
- *
- * Input:   uint argumentPosition
- */
-void EasyOpenCL::showValue(uint argumentPosition) {
-
-  // std::vector<T> output = getValue(argumentPosition);
-
-  // std::cout << "[ ";
-  // for (unsigned i = 0; i < output.size(); i++) {
-  //   std::cout << output[i];
-
-  //   if (i != output.size() - 1) {
-  //     std::cout << ", ";
-  //   }
-  // }
-  // std::cout << " ]" << std::endl;
-}
-
-void EasyOpenCL::showAllValues() {
-
-  // for(auto& kv : values) {
-  //   std::cout << kv.first << " : ";
-  //   showValue(kv.first);
-  // }
-
-}
-
-
-void EasyOpenCL::cleanup() {
+/******************************************************************************/
+//  EVALUATING
+/******************************************************************************/
+template<typename T>
+void EasyOpenCL<T>::cleanup() {
 
   for (auto& kv : kernels) {
 
-    Kernel& kernel = kv.second;
+    Kernel<T>& kernel = kv.second;
 
     status = clReleaseKernel(kernel);
     checkError("clReleaseKernel");
@@ -173,7 +146,8 @@ void EasyOpenCL::cleanup() {
   }
 }
 
-void EasyOpenCL::printDeviceProperty(cl_device_id device) {
+template<typename T>
+void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
 
   /*
   from: http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/
@@ -215,7 +189,4 @@ void EasyOpenCL::printDeviceProperty(cl_device_id device) {
   printf("Parallel compute units: %d\n\n", maxComputeUnits);
 }
 
-//template class EasyOpenCL<int>;
-//template class EasyOpenCL<char>;
-//template class EasyOpenCL<float>;
-
+template class EasyOpenCL<int>;

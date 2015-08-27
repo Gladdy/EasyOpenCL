@@ -1,4 +1,16 @@
-## EasyOpenCL
+## EasyOpenCL - Multikernel branch
+
+### TODO:
+* Implementing a sensible way of handling the lengths of vectors. Manually passing the length every time does not make sense, but neither does forcing all vectors to be the same.
+* Doing some more template magic for variable argument functions - adding multiple arguments to a kernel in a 'single' function call.
+* Automatically generating the local/global work group sizes
+* .dot output of your current kernel graph + auto generation of kernel (.cl) file empty function definitions.
+* making the kernel calls asynchronous using the clCommandQueue and event pointers
+* Template magic for the template classes. Currently if you want to add a new type to operate on you'd have to recompile the library to include it. Maybe just pass a void* and a length and cast it back in the .cl function? If everything would be included in the header files you'd lose the templating madness of explitly defining all used templates, but this comes at the cost of quite a lot of (A) readability and (B) compile speeds.
+* Benchmarks of asynchronous vs synchronous kernel calls
+* Detect circular dependencies of kernels
+* Examples with image processing, deep learning and a renderer/raytracer (tbh the main use case of GPUs)
+
 
 ### Features
 * No exposed low-level C, just the C++ STL - Focus on programming the GPU instead of messing about with long C-style OpenCL function calls and manual memory management.

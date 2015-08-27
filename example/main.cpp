@@ -10,7 +10,7 @@
 int main() {
 
   try {
-    EasyOpenCL<int> framework (SHOW_DEBUG);
+    EasyOpenCL<int> framework (NO_DEBUG);
 
     auto& square = framework.load("square");
     auto& aggregate = framework.load("aggregate");
@@ -19,9 +19,11 @@ int main() {
     aggregate.bindInput(0, std::vector<int> {1, 1, 2, 3, 5, 8});
     aggregate.bindOutput(2, 6);
 
-    framework.link(square, aggregate, {{1,1}});
+    framework.link(square, aggregate, 5, {{1,1}});
 
     framework.evaluate("aggregate");
+
+    square.showBuffers();
 
   }
   catch (std::exception& e) {

@@ -33,7 +33,7 @@ public:
   template<typename S>
   void bindScalar(uint, S value);
 
-  void bindPromise(uint);
+  void bindPromise(Kernel<T>&, uint, uint);
 
   /*******************************************************/
   //  RUNNING A KERNEL
@@ -53,15 +53,21 @@ public:
   /*******************************************************/
   void releaseMemObjects();
 
+  /*******************************************************/
+  //  UTILITY
+  /*******************************************************/
+  std::string getId() { return id; }
+  uint getExecutionCount() { return executionCounter; }
+
 private:
 
   /*******************************************************/
   //  CONTROLLING THE BOUNDVALUE MAPS
   /*******************************************************/
   void erase(uint);
-  void putBoundScalar(uint, const BoundScalar&&);
-  void putBoundBuffer(uint, const BoundBuffer&&);
-  void putBoundPromise(uint, const BoundPromise<T>&&);
+  // void putBoundScalar(uint, const BoundScalar&&);
+  // void putBoundBuffer(uint, const BoundBuffer&&);
+  // void putBoundPromise(uint, const BoundPromise<T>&&);
   std::map<uint, BoundScalar> boundScalars;
   std::map<uint, BoundBuffer> boundBuffers;
   std::map<uint, BoundPromise<T>> boundPromises;
@@ -72,6 +78,9 @@ private:
   cl_kernel kernel;
   cl_context context;
   cl_command_queue commandQueue;
+
+
+  uint executionCounter = 0;
 };
 
 #endif

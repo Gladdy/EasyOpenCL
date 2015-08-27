@@ -99,7 +99,21 @@ Kernel<T>& EasyOpenCL<T>::load(std::string id) {
 template<typename T>
 void EasyOpenCL<T>::link( Kernel<T>& source
                         , Kernel<T>& target
+                        , uint size
                         , std::map<uint,uint> links) {
+
+  for(auto& kv : links) {
+    uint sourceArgPos = kv.first;
+    uint targetArgPos = kv.second;
+
+    // Tell the source to generate an output
+    source.bindOutput(sourceArgPos, size);
+
+    // Tell the target that an input is promised
+    // coming from 'source' , argument position 'sourceArgPos'
+    // which should be bound to the targetArgPos
+    target.bindPromise(source, sourceArgPos, targetArgPos);
+  }
 
 }
 

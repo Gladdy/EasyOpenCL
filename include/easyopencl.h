@@ -24,7 +24,7 @@ public:
 	Kernel<T>& load(std::string);
 
 	// Linking the buffers
-	void link(Kernel<T>&, Kernel<T>&, std::map<uint,uint>);
+	void link(Kernel<T>&, Kernel<T>&, uint, std::map<uint,uint>);
 
 	// Evaluating the results
 	void evaluate(std::string id);

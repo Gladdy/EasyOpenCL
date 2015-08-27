@@ -16,7 +16,7 @@
  *          * Create a kernel from the compiled code and store it
  */
 template<typename T>
-Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename) {
+ Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename) {
 
   //Assign the captured variables
   id = id_;
@@ -62,8 +62,8 @@ Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& comma
   if(status != CL_SUCCESS) {
 
     std::cerr << "Make sure that the name of the entry function in '"
-              << filename << "'' is equal to '"
-              << kernelName_file << "'" << std::endl;
+    << filename << "'' is equal to '"
+    << kernelName_file << "'" << std::endl;
   }
   checkError("clCreateKernel");
 
@@ -82,7 +82,7 @@ Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& comma
  *          std::vector<T> input  - the boundValues of the kernel input
  */
 template<typename T>
-void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
+ void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
 
   if(input.size() > vectorSize) {
     vectorSize = input.size();
@@ -93,15 +93,15 @@ void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
   // It passes a pointer to the first element in the vector - so this does assume
   // that all elements are sequentially aligned in memory
   cl_mem inputBuffer = clCreateBuffer(context
-                          , CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR
-                          , input.size() * sizeof(T)
-                          , (void*)&input[0]
-                          , NULL);
+    , CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR
+    , input.size() * sizeof(T)
+    , (void*)&input[0]
+    , NULL);
 
   status = clSetKernelArg(kernel
-            , argPos
-            , sizeof(cl_mem)
-            , (void*)&inputBuffer );
+    , argPos
+    , sizeof(cl_mem)
+    , (void*)&inputBuffer );
 
   checkError("clSetKernelArg input " + std::to_string(argPos));
 
@@ -116,7 +116,7 @@ void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
  * Input:   int argPos  - the position of the argument
  */
 template<typename T>
-void Kernel<T>::bindOutput(uint argPos, uint bufferSize) {
+ void Kernel<T>::bindOutput(uint argPos, uint bufferSize) {
 
   // The program needs to know the length of the buffer - therefore, first pass
   // an input buffer so the length can be determined
@@ -147,9 +147,9 @@ void Kernel<T>::bindScalar(uint argPos, S value) {
 }
 
 template<typename T>
-void Kernel<T>::bindPromise(uint argPos) {
+void Kernel<T>::bindPromise(Kernel<T>& sourceKernel, uint sourceArgPos, uint argPos) {
   erase(argPos);
-  boundPromises.emplace(argPos, BoundPromise<T>(this));
+  boundPromises.emplace(argPos, BoundPromise<T>(&sourceKernel, sourceArgPos, argPos));
 }
 
 
@@ -168,11 +168,67 @@ void Kernel<T>::erase(uint argPos) {
 /*******************************************************/
 template<typename T>
 void Kernel<T>::runKernel() {
-  /*
+
+  std::cout << "Attempting to execute '" << id << "'." << std::endl;
+
   // Check whether the buffers specified have all been specified
   cl_uint kernelNumArgs;
-  status = clGetKernelInfo(kernels.find(id)->second, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &kernelNumArgs, NULL);
+  status = clGetKernelInfo(kernel, CL_KERNEL_NUM_ARGS, sizeof(cl_uint), &kernelNumArgs, NULL);
 
+
+  uint totalBoundArguments = boundScalars.size() + boundBuffers.size() + boundPromises.size();
+
+  if(kernelNumArgs != totalBoundArguments) {
+    raiseError("You have only specified " + std::to_string(totalBoundArguments) + "/" + std::to_string(kernelNumArgs) + " arguments for kernel '" + id + "'. (TODO, which ones are lacking?");
+  }
+
+  //Check whether there are dependencies
+  if(boundPromises.size())
+  {
+    // Dependencies exist, find them and resolve them by executing them
+    for(auto& kv : boundPromises)
+    {
+        //uint argPos = kv.first;
+        BoundPromise<T>& promise = kv.second;
+        Kernel<T> * sourceKernel = promise.sourceKernel;
+        std::string sourceId = sourceKernel->getId();
+
+        std::cout << "Found dependency\t"
+        << sourceId << "(" << promise.sourceArgPos << ") -> "
+        << id << "(" << promise.targetArgPos << ")" << std::endl;
+
+        if(sourceKernel->getExecutionCount() == 0) {
+          std::cout << sourceId << " has not been executed yet. Attempting to run!" << std::endl;
+
+          //Run the kernel (this can trigger more dependencies)
+          sourceKernel->runKernel();
+
+          BoundBuffer& buf = sourceKernel->boundBuffers.find(promise.sourceArgPos)->second;
+          cl_mem& memObject = buf.getMemObject();
+
+          //Set the kernel arguments of the current kernel
+          status = clSetKernelArg(kernel      // change the current kernel
+                    , promise.targetArgPos    // bind to the port that depends
+                    , sizeof(cl_mem)
+                    , (void*)&memObject);  // the cl_mem object from the output
+
+          checkError("Added output buffer already present on GPU to dependent kernel '" + id + "'");
+
+        } else {
+          std::cout << sourceId << " has been executed already!" << std::endl;
+        }
+
+      }
+
+  }
+  else
+  {
+    std::cout << "No kernel dependencies found." << std::endl;
+  }
+
+
+
+  /*
   // Get the kernel max work group size
   size_t maxWorkGroupSize;
   status = clGetKernelWorkGroupInfo(kernel, NULL, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWorkGroupSize, NULL);
@@ -203,16 +259,18 @@ void Kernel<T>::runKernel() {
 
   // Invoke the actual kernel execution
   status = clEnqueueNDRangeKernel(  commandQueue
-            , kernel
-            , 1               // The work dimension (1, 2 or 3)
-            , NULL            // global_work_offset (must be NULL)
-            , global_work_size
-            , local_work_size
-            , 0               // amount of events needing completion before this
-            , NULL            // event wait list
-            , NULL );         // pointer to a event object for this execution
+          , kernel
+          , 1               // The work dimension (1, 2 or 3)
+          , NULL            // global_work_offset (must be NULL)
+          , global_work_size
+          , local_work_size
+          , 0               // amount of events needing completion before this
+          , NULL            // event wait list
+          , NULL );         // pointer to a event object for this execution
 
-  checkError("Running kernel");
+  checkError("Running kernel " + id);
+
+  executionCounter++;
 }
 
 /*******************************************************/
@@ -226,7 +284,7 @@ void Kernel<T>::runKernel() {
  * Output:  std::vector<T>        - containing the values of the argument
  */
 template<typename T>
-std::vector<T> Kernel<T>::getBuffer(uint argPos) {
+ std::vector<T> Kernel<T>::getBuffer(uint argPos) {
 
   // Check whether the argument was actually part of the kernel
   auto it = boundBuffers.find(argPos);
@@ -242,14 +300,14 @@ std::vector<T> Kernel<T>::getBuffer(uint argPos) {
 
   // Read the values from the OpenCL device into the buffer
   status = clEnqueueReadBuffer( commandQueue
-            , boundBuffer
-            , CL_TRUE
-            , 0
-            , size * sizeof(T)
-            , hostBuffer
-            , 0
-            , NULL
-            , NULL );
+    , boundBuffer
+    , CL_TRUE
+    , 0
+    , size * sizeof(T)
+    , hostBuffer
+    , 0
+    , NULL
+    , NULL );
 
   //Clean up the buffer and raise an error if something went wrong
   if (status != CL_SUCCESS) {
@@ -276,19 +334,19 @@ std::vector<T> Kernel<T>::getBuffer(uint argPos) {
  * Input:   uint argumentPosition
  */
 template<typename T>
-void Kernel<T>::showBuffer(uint argPos) {
+ void Kernel<T>::showBuffer(uint argPos) {
 
   std::vector<T> output = getBuffer(argPos);
 
   std::cout << "[ ";
-  for (unsigned i = 0; i < output.size(); i++) {
-    std::cout << output[i];
+    for (unsigned i = 0; i < output.size(); i++) {
+      std::cout << output[i];
 
-    if (i != output.size() - 1) {
-      std::cout << ", ";
+      if (i != output.size() - 1) {
+        std::cout << ", ";
+      }
     }
-  }
-  std::cout << " ]" << std::endl;
+    std::cout << " ]" << std::endl;
 }
 
 /**
@@ -297,7 +355,7 @@ void Kernel<T>::showBuffer(uint argPos) {
  * Input:   uint argumentPosition
  */
 template<typename T>
-void Kernel<T>::showBuffers() {
+ void Kernel<T>::showBuffers() {
   for(auto& kv : boundBuffers) {
     std::cout << kv.first << " : ";
     showBuffer(kv.first);

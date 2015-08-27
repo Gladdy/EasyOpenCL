@@ -1,4 +1,5 @@
 #include "boundvalue.h"
+#include "kernel.h"
 
 #include <cstring>
 #include <iostream>
@@ -67,14 +68,21 @@ uint BoundBuffer::getSize() {
 //  Promises
 /*******************************************************/
 template<typename T>
-BoundPromise<T>::BoundPromise(Kernel<T> * k) {
+BoundPromise<T>::BoundPromise(Kernel<T> * k, uint s, uint t) {
   sourceKernel = k;
+  sourceArgPos = s;
+  targetArgPos = t;
 }
 
 template<typename T>
-BoundPromise<T>::BoundPromise(BoundPromise&& bp) {}
+BoundPromise<T>::BoundPromise(BoundPromise&& bp) {
+  sourceKernel = bp.sourceKernel;
+  sourceArgPos = bp.sourceArgPos;
+  targetArgPos = bp.targetArgPos;
+}
 
 template<typename T>
 BoundPromise<T>::~BoundPromise() {}
+
 
 template class BoundPromise<int>;

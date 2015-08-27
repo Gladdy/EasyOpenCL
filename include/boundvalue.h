@@ -48,6 +48,11 @@ public:
 
   uint getSize();
   operator cl_mem();
+
+  cl_mem& getMemObject() {
+    return buffer;
+  }
+
 private:
   uint size = 0;
   cl_mem buffer;
@@ -60,16 +65,20 @@ template<typename> class Kernel;
 
 template<typename T>
 class BoundPromise : public BoundValue {
+  friend class Kernel<T>;
 public:
   //Main constructor
-  BoundPromise(Kernel<T>*);
+  BoundPromise(Kernel<T>*, uint, uint);
 
   //Move constructor & destructor
   BoundPromise(BoundPromise&&);
   ~BoundPromise();
+
 private:
 
   Kernel<T> * sourceKernel;
+  uint sourceArgPos;
+  uint targetArgPos;
 };
 
 #endif

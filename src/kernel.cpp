@@ -169,7 +169,9 @@ void Kernel<T>::erase(uint argPos) {
 template<typename T>
 void Kernel<T>::runKernel() {
 
-  std::cout << "Attempting to execute '" << id << "'." << std::endl;
+  if(debug) {
+    std::cout << "Attempting to execute '" << id << "'." << std::endl;
+  }
 
   // Check whether the buffers specified have all been specified
   cl_uint kernelNumArgs;
@@ -198,7 +200,10 @@ void Kernel<T>::runKernel() {
         << id << "(" << promise.targetArgPos << ")" << std::endl;
 
         if(sourceKernel->getExecutionCount() == 0) {
-          std::cout << sourceId << " has not been executed yet. Attempting to run!" << std::endl;
+
+          if(debug) {
+            std::cout << sourceId << " has not been executed yet. Attempting to run!" << std::endl;
+          }
 
           //Run the kernel (this can trigger more dependencies)
           sourceKernel->runKernel();
@@ -215,7 +220,9 @@ void Kernel<T>::runKernel() {
           checkError("Added output buffer already present on GPU to dependent kernel '" + id + "'");
 
         } else {
-          std::cout << sourceId << " has been executed already!" << std::endl;
+          if(debug) {
+            std::cout << sourceId << " has been executed already!" << std::endl;
+          }
         }
 
       }
@@ -223,7 +230,9 @@ void Kernel<T>::runKernel() {
   }
   else
   {
-    std::cout << "No kernel dependencies found." << std::endl;
+    if(debug) {
+      std::cout << "No kernel dependencies found." << std::endl;
+    }
   }
 
 
@@ -233,26 +242,13 @@ void Kernel<T>::runKernel() {
   size_t maxWorkGroupSize;
   status = clGetKernelWorkGroupInfo(kernel, NULL, CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxWorkGroupSize, NULL);
   std::cout << maxWorkGroupSize << std::endl;
+  */
 
-  std::vector<uint> argumentVector;
-  for(auto& kv : values) {
-    argumentVector.push_back(kv.first);
-  }
-
-  std::sort(argumentVector.begin(), argumentVector.end());
-
-  for(uint i = 0; i < kernelNumArgs; i++) {
-    if(i > (argumentVector.size()-1) || argumentVector[i] != i) {
-      raiseError("The buffers do not form a sequential set starting at 0: " + std::to_string(i) + " is missing");
-    }
-  }*/
 
   // Create a global_work_size array
   // This determines how many workers will execute the kernel
   // If you set a single worker, the process will be sequential
   // If you set too many workers, the OpenCL driver will be unable to function
-
-
   // Determine the values of the work group sizes
   size_t global_work_size[] = { vectorSize };
   size_t local_work_size[] = { vectorSize };
@@ -271,6 +267,8 @@ void Kernel<T>::runKernel() {
   checkError("Running kernel " + id);
 
   executionCounter++;
+
+  std::cout << "Executed '" << id << "'." << std::endl;
 }
 
 /*******************************************************/
@@ -284,7 +282,7 @@ void Kernel<T>::runKernel() {
  * Output:  std::vector<T>        - containing the values of the argument
  */
 template<typename T>
- std::vector<T> Kernel<T>::getBuffer(uint argPos) {
+std::vector<T> Kernel<T>::getBuffer(uint argPos) {
 
   // Check whether the argument was actually part of the kernel
   auto it = boundBuffers.find(argPos);
@@ -334,7 +332,7 @@ template<typename T>
  * Input:   uint argumentPosition
  */
 template<typename T>
- void Kernel<T>::showBuffer(uint argPos) {
+void Kernel<T>::showBuffer(uint argPos) {
 
   std::vector<T> output = getBuffer(argPos);
 
@@ -355,7 +353,7 @@ template<typename T>
  * Input:   uint argumentPosition
  */
 template<typename T>
- void Kernel<T>::showBuffers() {
+void Kernel<T>::showBuffers() {
   for(auto& kv : boundBuffers) {
     std::cout << kv.first << " : ";
     showBuffer(kv.first);
@@ -377,4 +375,17 @@ Kernel<T>::operator cl_kernel() {
 
 
 template class Kernel<int>;
+template class Kernel<float>;
+template class Kernel<double>;
+
 template void Kernel<int>::bindScalar<int>(uint,int);
+template void Kernel<int>::bindScalar<float>(uint,float);
+template void Kernel<int>::bindScalar<double>(uint,double);
+
+template void Kernel<float>::bindScalar<int>(uint,int);
+template void Kernel<float>::bindScalar<float>(uint,float);
+template void Kernel<float>::bindScalar<double>(uint,double);
+
+template void Kernel<double>::bindScalar<int>(uint,int);
+template void Kernel<double>::bindScalar<float>(uint,float);
+template void Kernel<double>::bindScalar<double>(uint,double);

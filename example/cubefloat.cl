@@ -1,4 +1,4 @@
-__kernel void cube(__global int* input, __global int* output)
+__kernel void cubefloat(__global float* input, __global float* output)
 {
   int i = get_global_id(0);
   output[i] = input[i] * input[i] * input[i];

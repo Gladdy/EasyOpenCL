@@ -81,6 +81,8 @@ private:
 
 
   uint executionCounter = 0;
+
+  const bool debug = false;
 };
 
 #endif

@@ -10,21 +10,38 @@
 int main() {
 
   try {
-    EasyOpenCL<int> framework (NO_DEBUG);
+    EasyOpenCL<float> framework (NO_DEBUG);
 
-    auto& square = framework.load("square");
-    auto& aggregate = framework.load("aggregate");
+    auto& square = framework.load("squarefloat");
+    auto& cube = framework.load("cubefloat");
+    auto& aggregate = framework.load("aggregatefloat");
 
-    square.bindInput(0, std::vector<int> {1, 5, 3, 2, 4, 5});
-    aggregate.bindInput(0, std::vector<int> {1, 1, 2, 3, 5, 8});
+    std::vector<float> initData {1.0, 5.0, 3.3434324, 2.0, 4.0, 5.0};
+
+    //Specify the entry and exit points for the kernel graph
+    square.bindInput(0, initData);
+    cube.bindInput(0, initData);
     aggregate.bindOutput(2, 6);
 
-    framework.link(square, aggregate, 5, {{1,1}});
+    //Specify the links of the kernel graph
+    framework.link(square, aggregate, initData.size(), {{1,0}});
+    framework.link(cube, aggregate, initData.size(), {{1,1}});
 
-    framework.evaluate("aggregate");
+    // Graphical representation of the structure created above
+    //
+    // initData      initData
+    //   |             |
+    //   |             |
+    // square (^2)   cube (^3)
+    //    \           /
+    //     \         /
+    //      aggregate (+)
+    //          |
+    //          |
+    //        output
 
-    square.showBuffers();
-
+    framework.evaluate("aggregatefloat");
+    aggregate.showBuffers();
   }
   catch (std::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;

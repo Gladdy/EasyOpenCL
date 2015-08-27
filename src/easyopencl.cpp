@@ -203,4 +203,8 @@ void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
   printf("Parallel compute units: %d\n\n", maxComputeUnits);
 }
 
+
 template class EasyOpenCL<int>;
+template class EasyOpenCL<float>;
+template class EasyOpenCL<double>;
+

@@ -1,5 +1,4 @@
 ## EasyOpenCL
-### Beware - the multikernel branch is in active development - not for use yet
 
 ### Features
 * No exposed low-level C, just the C++ STL - Focus on programming the GPU instead of messing about with long C-style OpenCL function calls and manual memory management.
@@ -9,6 +8,7 @@
 * Human readable OpenCL errors for easy debugging of your program due to the already present error checks on every OpenCL call.
 * Includes an example of some slighly more advanced OpenCL to help you get started - computing the sum of a vector in logarithmic time (`example/sum.cl`)
 
+* Work in progress - a multikernel branch which allows for the specification of a kernel chain in graph form. It automatically handles interdependencies of kernels.
 ### Overview: it's this easy!
 ```cpp
 // example/main.cpp

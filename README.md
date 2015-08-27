@@ -7,8 +7,8 @@
 * Variable amount of input vectors, output vectors and scalars.
 * Human readable OpenCL errors for easy debugging of your program due to the already present error checks on every OpenCL call.
 * Includes an example of some slighly more advanced OpenCL to help you get started - computing the sum of a vector in logarithmic time (`example/sum.cl`)
+* (WORK IN PROGRESS, check the multikernel branch) The specification of a kernel chain in graph form. It automatically handles interdependencies of kernels and allows you to customize which arguments act as inputs/outputs to which other kernels.
 
-* Work in progress - a multikernel branch which allows for the specification of a kernel chain in graph form. It automatically handles interdependencies of kernels.
 ### Overview: it's this easy!
 ```cpp
 // example/main.cpp

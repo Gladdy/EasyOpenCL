@@ -1,13 +1,17 @@
 #ifndef _KERNEL_
 #define _KERNEL_
 
+#include "easyopencl.h"
 #include "errorhandler.h"
 #include "boundvalue.h"
+
 
 #include "opencl-crossplatform.h"
 
 #include <map>
 #include <vector>
+
+template <typename> class EasyOpenCL;
 
 template<typename T>
 class Kernel : public ErrorHandler {
@@ -16,13 +20,6 @@ class Kernel : public ErrorHandler {
 
 public:
   Kernel() {}
-  Kernel(std::string
-        , cl_context&
-        , cl_command_queue&
-        , cl_device_id*
-        , std::string);
-  operator cl_kernel();
-
 
   /*******************************************************/
   //  BINDING VALUES TO THE BUFFERS
@@ -61,19 +58,20 @@ public:
 
 private:
 
+  Kernel(std::string, cl_context&, cl_command_queue&
+        , cl_device_id*, std::string, EasyOpenCL<T>* );
+  operator cl_kernel();
+
   /*******************************************************/
   //  CONTROLLING THE BOUNDVALUE MAPS
   /*******************************************************/
   void erase(uint);
-  // void putBoundScalar(uint, const BoundScalar&&);
-  // void putBoundBuffer(uint, const BoundBuffer&&);
-  // void putBoundPromise(uint, const BoundPromise<T>&&);
   std::map<uint, BoundScalar> boundScalars;
   std::map<uint, BoundBuffer> boundBuffers;
   std::map<uint, BoundPromise<T>> boundPromises;
 
   std::string id;
-  size_t vectorSize = 5;
+  size_t vectorSize = 6;
 
   cl_kernel kernel;
   cl_context context;
@@ -83,6 +81,7 @@ private:
   uint executionCounter = 0;
 
   const bool debug = false;
+  EasyOpenCL<T> * framework;
 };
 
 #endif

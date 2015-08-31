@@ -74,11 +74,14 @@ public:
   BoundPromise(BoundPromise&&);
   ~BoundPromise();
 
+  uint getSize();
+
 private:
 
   Kernel<T> * sourceKernel;
   uint sourceArgPos;
   uint targetArgPos;
+  uint size;
 };
 
 #endif

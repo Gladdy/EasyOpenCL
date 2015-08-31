@@ -89,7 +89,7 @@ Kernel<T>& EasyOpenCL<T>::load(std::string id) {
   }
 
   //Store the kernel in the map
-  kernels.emplace(id, Kernel<T>(id, context, commandQueue, devices, id + ".cl"));
+  kernels.emplace(id, Kernel<T>(id, context, commandQueue, devices, id + ".cl", this));
   return kernels[id];
 }
 

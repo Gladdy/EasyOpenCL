@@ -81,6 +81,10 @@ BoundPromise<T>::BoundPromise(BoundPromise&& bp) {
 template<typename T>
 BoundPromise<T>::~BoundPromise() {}
 
+template<typename T>
+uint BoundPromise<T>::getSize() {
+  return size;
+}
 
 template class BoundPromise<int>;
 template class BoundPromise<float>;

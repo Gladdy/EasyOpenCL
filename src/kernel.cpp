@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "easyopencl.h"
 
 #include <iostream>
 #include <sstream>
@@ -16,12 +17,13 @@
  *          * Create a kernel from the compiled code and store it
  */
 template<typename T>
- Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename) {
+ Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename, EasyOpenCL<T> * framework_) {
 
   //Assign the captured variables
   id = id_;
   context = context_;
   commandQueue = commandQueue_;
+  framework = framework_;
 
   // Open the file
   std::ifstream f(filename);
@@ -285,20 +287,33 @@ template<typename T>
 std::vector<T> Kernel<T>::getBuffer(uint argPos) {
 
   // Check whether the argument was actually part of the kernel
-  auto it = boundBuffers.find(argPos);
-  if(it == boundBuffers.end()) {
+  auto itBuffer = boundBuffers.find(argPos);
+  auto itPromise = boundPromises.find(argPos);
+
+  if(itBuffer == boundBuffers.end() && itPromise == boundPromises.end()) {
     raiseError("The buffer at position " + std::to_string(argPos) + " could not be retrieved");
   }
 
-  BoundBuffer& boundBuffer = it->second;
+  uint size;
+  cl_mem bufferHandle;
 
-  // Allocate a buffer which can hold the results from the OpenCL device
-  uint size = boundBuffer.getSize();
-  T* hostBuffer = new T[size];
+  if(itBuffer != boundBuffers.end()) {
+    // The found buffer is an actual one
+    size = itBuffer->second.getSize();
+    bufferHandle = itBuffer->second;
+
+  } else {
+    uint pos = itPromise->second.sourceArgPos;
+    bufferHandle = itPromise->second.sourceKernel->boundBuffers.at(pos);
+    size = itPromise->second.sourceKernel->boundBuffers.at(pos).getSize();
+  }
+
+  T * hostBuffer = new T[size];
 
   // Read the values from the OpenCL device into the buffer
+
   status = clEnqueueReadBuffer( commandQueue
-    , boundBuffer
+    , bufferHandle
     , CL_TRUE
     , 0
     , size * sizeof(T)

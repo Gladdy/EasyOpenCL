@@ -24,6 +24,7 @@ public:
 	Kernel<T>& load(std::string);
 
 	// Linking the buffers
+	void link(Kernel<T>&, Kernel<T>&, std::map<uint,uint>);
 	void link(Kernel<T>&, Kernel<T>&, uint, std::map<uint,uint>);
 
 	// Evaluating the results
@@ -32,8 +33,12 @@ public:
 	// Cleaning up afterwards
 	void cleanup();
 
+	void setVectorSize(size_t s) { vectorSize = s; }
+	int getVectorSize() { return vectorSize; }
+
 private:
 	void printDeviceProperty(cl_device_id);
+
 
 	bool 							info;
 
@@ -42,6 +47,7 @@ private:
 	cl_command_queue 	commandQueue;
 
 	std::map<std::string, Kernel<T>> kernels;
+	int vectorSize = -1;
 };
 
 #endif

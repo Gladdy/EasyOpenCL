@@ -99,6 +99,24 @@ Kernel<T>& EasyOpenCL<T>::load(std::string id) {
 template<typename T>
 void EasyOpenCL<T>::link( Kernel<T>& source
                         , Kernel<T>& target
+                        , std::map<uint,uint> links) {
+
+  for(auto& kv : links) {
+    uint sourceArgPos = kv.first;
+    uint targetArgPos = kv.second;
+
+    // Tell the source to generate an output
+    source.bindOutput(sourceArgPos);
+
+    // Tell the target that an input is promised
+    // coming from 'source' , argument position 'sourceArgPos'
+    // which should be bound to the targetArgPos
+    target.bindPromise(source, sourceArgPos, targetArgPos);
+  }
+}
+template<typename T>
+void EasyOpenCL<T>::link( Kernel<T>& source
+                        , Kernel<T>& target
                         , uint size
                         , std::map<uint,uint> links) {
 
@@ -204,7 +222,7 @@ void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
 }
 
 
-template class EasyOpenCL<int>;
 template class EasyOpenCL<float>;
-template class EasyOpenCL<double>;
+//template class EasyOpenCL<int>;
+//template class EasyOpenCL<double>;
 

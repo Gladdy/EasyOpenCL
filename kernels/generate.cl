@@ -1,5 +1,5 @@
-__kernel void generate(__global int* array)
+__kernel void generate(__global int* output)
 {
   int i = get_global_id(0);
-  array[i] = i;
+  output[i] = i;
 }

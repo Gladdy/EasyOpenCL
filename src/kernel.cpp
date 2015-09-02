@@ -17,7 +17,8 @@
  *          * Create a kernel from the compiled code and store it
  */
 template<typename T>
- Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_, cl_device_id* devices, std::string filename, EasyOpenCL<T> * framework_) {
+ Kernel<T>::Kernel(std::string id_, cl_context& context_, cl_command_queue& commandQueue_
+                  , cl_device_id* devices, std::string filename, EasyOpenCL<T>* framework_ ) {
 
   //Assign the captured variables
   id = id_;
@@ -84,11 +85,14 @@ template<typename T>
  *          std::vector<T> input  - the boundValues of the kernel input
  */
 template<typename T>
- void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
+void Kernel<T>::bindInput(uint argPos, std::vector<T> input) {
 
-  if(input.size() > vectorSize) {
-    vectorSize = input.size();
+  vectorSize = input.size();
+
+  if(framework->getVectorSize() == -1) {
+    framework->setVectorSize(vectorSize);
   }
+
 
   // Create the actual input buffer at the designated postion
   // Getting the boundValues from the vector involves from C-style hacking
@@ -117,13 +121,40 @@ template<typename T>
  *
  * Input:   int argPos  - the position of the argument
  */
+
+/*
+  Buffer length check priority:
+  1. passed as an argument
+  2. the value of the kernel
+  3. the value of the framework
+ */
 template<typename T>
- void Kernel<T>::bindOutput(uint argPos, uint bufferSize) {
+void Kernel<T>::bindOutput(uint argPos) {
 
   // The program needs to know the length of the buffer - therefore, first pass
   // an input buffer so the length can be determined
-  // if (vectorSize == -1)  { raiseError("Please pass the input buffer first"); }
-  // if (kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
+  uint bufferSize;
+
+  if (vectorSize != -1)
+  {
+    //from the kernel
+    bufferSize = vectorSize;
+  }
+  else if (framework->getVectorSize() != -1)
+  {
+    //from the framework
+    bufferSize = framework->getVectorSize();
+  }
+  else
+  {
+    raiseError("Unable to determine output buffer size.");
+  }
+
+  bindOutput(argPos, bufferSize);
+}
+
+template<typename T>
+void Kernel<T>::bindOutput(uint argPos, uint bufferSize) {
 
   // Create and append the actual output buffer
   cl_mem outputBuffer = clCreateBuffer(context, CL_MEM_READ_WRITE, bufferSize * sizeof(T), NULL, NULL);
@@ -133,19 +164,6 @@ template<typename T>
   // Add the buffer to the map for later reference - retrieval and cleanup
   erase(argPos);
   boundBuffers.emplace(argPos, BoundBuffer(outputBuffer, bufferSize));
-}
-
-template<typename T>
-template<typename S>
-void Kernel<T>::bindScalar(uint argPos, S value) {
-
-  // See setInputBuffer comments
-  status = clSetKernelArg(kernel, argPos, sizeof(S), &value);
-  checkError("clSetKernelArg singleValue " + std::to_string(argPos));
-
-  // Add the buffer to the map for later reference - retrieval and cleanup
-  erase(argPos);
-  boundScalars.emplace(argPos, BoundScalar(value));
 }
 
 template<typename T>
@@ -187,8 +205,7 @@ void Kernel<T>::runKernel() {
   }
 
   //Check whether there are dependencies
-  if(boundPromises.size())
-  {
+  if(boundPromises.size()) {
     // Dependencies exist, find them and resolve them by executing them
     for(auto& kv : boundPromises)
     {
@@ -197,9 +214,9 @@ void Kernel<T>::runKernel() {
         Kernel<T> * sourceKernel = promise.sourceKernel;
         std::string sourceId = sourceKernel->getId();
 
-        std::cout << "Found dependency\t"
-        << sourceId << "(" << promise.sourceArgPos << ") -> "
-        << id << "(" << promise.targetArgPos << ")" << std::endl;
+        std::cout << "Found dependency\t" <<
+        sourceId << "(" << promise.sourceArgPos << ") -> " <<
+        id << "(" << promise.targetArgPos << ")" << std::endl;
 
         if(sourceKernel->getExecutionCount() == 0) {
 
@@ -226,12 +243,9 @@ void Kernel<T>::runKernel() {
             std::cout << sourceId << " has been executed already!" << std::endl;
           }
         }
-
       }
-
   }
-  else
-  {
+  else {
     if(debug) {
       std::cout << "No kernel dependencies found." << std::endl;
     }
@@ -252,6 +266,13 @@ void Kernel<T>::runKernel() {
   // If you set a single worker, the process will be sequential
   // If you set too many workers, the OpenCL driver will be unable to function
   // Determine the values of the work group sizes
+  //
+  //
+
+  if(vectorSize == -1) {
+    vectorSize = framework->getVectorSize();
+  }
+
   size_t global_work_size[] = { vectorSize };
   size_t local_work_size[] = { vectorSize };
 
@@ -389,18 +410,18 @@ Kernel<T>::operator cl_kernel() {
 }
 
 
-template class Kernel<int>;
 template class Kernel<float>;
-template class Kernel<double>;
+// template class Kernel<int>;
+// template class Kernel<double>;
 
-template void Kernel<int>::bindScalar<int>(uint,int);
-template void Kernel<int>::bindScalar<float>(uint,float);
-template void Kernel<int>::bindScalar<double>(uint,double);
+// template void Kernel<int>::bindScalar<int>(uint,int);
+// template void Kernel<int>::bindScalar<float>(uint,float);
+// template void Kernel<int>::bindScalar<double>(uint,double);
 
-template void Kernel<float>::bindScalar<int>(uint,int);
-template void Kernel<float>::bindScalar<float>(uint,float);
-template void Kernel<float>::bindScalar<double>(uint,double);
+// template void Kernel<float>::bindScalar<int>(uint,int);
+// template void Kernel<float>::bindScalar<float>(uint,float);
+// template void Kernel<float>::bindScalar<double>(uint,double);
 
-template void Kernel<double>::bindScalar<int>(uint,int);
-template void Kernel<double>::bindScalar<float>(uint,float);
-template void Kernel<double>::bindScalar<double>(uint,double);
+// template void Kernel<double>::bindScalar<int>(uint,int);
+// template void Kernel<double>::bindScalar<float>(uint,float);
+// template void Kernel<double>::bindScalar<double>(uint,double);

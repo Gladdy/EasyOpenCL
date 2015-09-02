@@ -19,16 +19,25 @@ class Kernel : public ErrorHandler {
   template <typename> friend class EasyOpenCL;
 
 public:
-  Kernel() {}
 
+  Kernel() {}
   /*******************************************************/
   //  BINDING VALUES TO THE BUFFERS
   /*******************************************************/
   void bindInput(uint, std::vector<T>);
+
+  void bindOutput(uint);
   void bindOutput(uint, uint);
 
   template<typename S>
-  void bindScalar(uint, S value);
+  void bindScalar(uint argPos, S value) {
+    //Inline definition to avoid recompilation of the entire library
+    //if you just want to add a new scalar type.
+    status = clSetKernelArg(kernel, argPos, sizeof(S), &value);
+    checkError("clSetKernelArg singleValue " + std::to_string(argPos));
+    erase(argPos);
+    boundScalars.emplace(argPos, BoundScalar(value));
+  }
 
   void bindPromise(Kernel<T>&, uint, uint);
 
@@ -71,7 +80,7 @@ private:
   std::map<uint, BoundPromise<T>> boundPromises;
 
   std::string id;
-  size_t vectorSize = 6;
+  size_t vectorSize = -1;
 
   cl_kernel kernel;
   cl_context context;

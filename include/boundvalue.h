@@ -20,14 +20,29 @@ class BoundScalar : public BoundValue {
 public:
   //Main constructor
   template<typename T>
-  BoundScalar(T);
+  BoundScalar(T val)
+  {
+    //Defined inline to avoid template hell
+    if( std::is_trivial<T>::value == false) {
+      raiseError("The scalar type is not trivially copyable");
+    }
+
+    size = sizeof(T);
+    scalar = new char[size];
+
+    T * scalarT = (T*)scalar;
+    *scalarT = val;
+  }
 
   //Move constructor & destructor
   BoundScalar(BoundScalar&&);
   ~BoundScalar();
 
   template<typename T>
-  T getValue();
+  T getValue() {
+    T * scalarT = (T*) scalar;
+    return *scalarT;
+  }
 private:
   size_t size = 0;
   char * scalar;

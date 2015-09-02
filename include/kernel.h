@@ -86,9 +86,7 @@ private:
   cl_context context;
   cl_command_queue commandQueue;
 
-
   uint executionCounter = 0;
-
   const bool debug = false;
   EasyOpenCL<T> * framework;
 };

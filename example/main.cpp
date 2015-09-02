@@ -4,7 +4,6 @@
 #include <iostream>
 #include <exception>
 #include <vector>
-#include <cstdlib>
 
 int main() {
 
@@ -34,9 +33,9 @@ int main() {
 
 
     //Specify the entry and exit points for the kernel graph
-    mac.bindInput(0, initData);   // (a)
+    mac.bindInput(0, initData);       // (a)
     mac.bindScalar<MAC>(2, macdata);  // (b)
-    aggregate.bindOutput(2);      // (c)
+    aggregate.bindOutput(2);          // (c)
 
     //Specify the links of the kernel graph
     framework.link(generate, square, {{0,0}});   // (1)
@@ -59,7 +58,7 @@ int main() {
     //           |
     //         output
 
-    framework.evaluate("aggregatefloat");
+    aggregate.evaluate();
     aggregate.showBuffers();
   }
   catch (std::exception& e) { std::cerr << "Error: " << e.what() << std::endl; }

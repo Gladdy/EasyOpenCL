@@ -1,6 +1,5 @@
-add_executable (test main.cpp)
+add_executable (main main.cpp)
+target_link_libraries (main LINK_PUBLIC EasyOpenCL)
 
-target_link_libraries (test LINK_PUBLIC EasyOpenCL)
-
-file(GLOB KERNEL_FUNCTIONS "*.cl")
-file(COPY ${KERNEL_FUNCTIONS} DESTINATION ${CMAKE_BINARY_DIR})
+add_executable (simple simple.cpp)
+target_link_libraries (simple LINK_PUBLIC EasyOpenCL)

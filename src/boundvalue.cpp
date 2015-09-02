@@ -1,34 +1,96 @@
 #include "boundvalue.h"
+#include "kernel.h"
 
-template<class T>
-BoundValue<T>::BoundValue(cl_mem val) {
-  cl_mem_value = val;
-  type = CL_MEM;
+#include <cstring>
+#include <iostream>
+#include <type_traits>
+
+
+/*******************************************************/
+//  Constant scalars
+/*******************************************************/
+// template<typename T>
+// BoundScalar::BoundScalar(T val) {
+//   if( std::is_trivial<T>::value == false) {
+//     raiseError("The scalar type is not trivially copyable");
+//   }
+
+//   size = sizeof(T);
+//   scalar = new char[size];
+
+//   T * scalarT = (T*)scalar;
+//   *scalarT = val;
+// }
+
+BoundScalar::BoundScalar(BoundScalar&& bs) {
+  size = bs.size;
+  scalar = new char[size];
+  for(int i = 0; i < size; i++) { scalar[i] = bs.scalar[i]; }
 }
 
-template<class T>
-BoundValue<T>::BoundValue(T val) {
-  scalar_value = val;
-  type = SCALAR;
+BoundScalar::~BoundScalar() {
+  delete scalar;
 }
 
-template<class T>
-bool BoundValue<T>::isScalar() {
-  return (type == SCALAR);
+// template<typename T>
+// T BoundScalar::getValue
+
+/*******************************************************/
+//  Buffers
+/*******************************************************/
+BoundBuffer::BoundBuffer(cl_mem b, uint s) {
+  size = s;
+  buffer = b;
 }
 
-template<class T>
-T BoundValue<T>::getScalarValue() {
-  return scalar_value;
+BoundBuffer::BoundBuffer(BoundBuffer&& bb) {
+  size = bb.size;
+  buffer = bb.buffer;
 }
 
-template<class T>
-BoundValue<T>::operator cl_mem() {
-  return cl_mem_value;
+BoundBuffer::~BoundBuffer() {}
+
+BoundBuffer::operator cl_mem() {
+  return buffer;
 }
 
+uint BoundBuffer::getSize() {
+  return size;
+}
 
+/*******************************************************/
+//  Promises
+/*******************************************************/
+template<typename T>
+BoundPromise<T>::BoundPromise(Kernel<T> * k, uint s, uint t) {
+  sourceKernel = k;
+  sourceArgPos = s;
+  targetArgPos = t;
+}
 
-template class BoundValue<char>;
-template class BoundValue<int>;
-template class BoundValue<float>;
+template<typename T>
+BoundPromise<T>::BoundPromise(BoundPromise&& bp) {
+  sourceKernel = bp.sourceKernel;
+  sourceArgPos = bp.sourceArgPos;
+  targetArgPos = bp.targetArgPos;
+}
+
+template<typename T>
+BoundPromise<T>::~BoundPromise() {}
+
+template<typename T>
+uint BoundPromise<T>::getSize() {
+  return size;
+}
+
+// template class BoundPromise<int>;
+template class BoundPromise<float>;
+
+// template class BoundPromise<double>;
+
+// template BoundScalar::BoundScalar(int);
+// template int BoundScalar::getValue<int>();
+template BoundScalar::BoundScalar(float);
+template float BoundScalar::getValue<float>();
+// template BoundScalar::BoundScalar(double);
+// template double BoundScalar::getValue<double>();

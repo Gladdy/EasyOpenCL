@@ -1,0 +1,4 @@
+struct MAC {
+  float mult;
+  float add;
+};

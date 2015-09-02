@@ -1,55 +1,44 @@
-## EasyOpenCL - Multikernel branch
-
-### TODO:
-* Implementing a sensible way of handling the lengths of vectors. Manually passing the length every time does not make sense, but neither does forcing all vectors to be the same.
-* Doing some more template magic for variable argument functions - adding multiple arguments to a kernel in a 'single' function call.
-* Automatically generating the local/global work group sizes
-* .dot output of your current kernel graph + auto generation of kernel (.cl) file empty function definitions.
-* making the kernel calls asynchronous using the clCommandQueue and event pointers
-* Template magic for the template classes. Currently if you want to add a new type to operate on you'd have to recompile the library to include it. Maybe just pass a void* and a length and cast it back in the .cl function? If everything would be included in the header files you'd lose the templating madness of explitly defining all used templates, but this comes at the cost of quite a lot of (A) readability and (B) compile speeds.
-* Benchmarks of asynchronous vs synchronous kernel calls
-* Detect circular dependencies of kernels
-* Examples with image processing, deep learning and a renderer/raytracer (tbh the main use case of GPUs)
-
+## EasyOpenCL
 
 ### Features
 * No exposed low-level C, just the C++ STL - Focus on programming the GPU instead of messing about with long C-style OpenCL function calls and manual memory management.
 * CMake support for Linux and Mac - No more linking problems if you have installed the correct driver.
-* The kernel type is a template: choose from processing `float`s, `int`s or `char`s on your GPU.
-* Variable amount of input vectors, output vectors and scalars.
-* Human readable OpenCL errors for easy debugging of your program due to the already present error checks on every OpenCL call.
+* Template kernel processing type: choose from processing `float`s, `int`s or `char`s on your GPU.
+* Variable amount of input and output vectors of arbitrary length.
+* Support for scalar values: pass additional structs to your kernel, eg. transformation matrices or custom constants.
+* Chain kernels together in order to create a true pipeline on your GPU in which kernels can depend on multiple others.
+* Human readable OpenCL errors for easy debugging and teaching of the OpenCL basics.
 * Includes an example of some slighly more advanced OpenCL to help you get started - computing the sum of a vector in logarithmic time (`example/sum.cl`)
-* (WORK IN PROGRESS, check the multikernel branch) The specification of a kernel chain in graph form. It automatically handles interdependencies of kernels and allows you to customize which arguments act as inputs/outputs to which other kernels.
 
 ### Overview: it's this easy!
 ```cpp
-// example/main.cpp
+// example/simple.cpp
 try {
-  EasyOpenCL<int> framework (SHOW_DEBUG);
-
-  //Load a kernel function
-  framework.loadKernel("simplekernel.cl");
-
-  //Bind the inputs and outputs to the kernel function arguments
-  framework.setInputBuffer(0, std::vector<int> {1, 2, 3, 4, 5});
-  framework.setSingleValue(1, 10);
-
-  //Run the kernel and display the results
-  framework.runKernel();
-  framework.showAllValues();
-}
-catch (std::exception& e) {
-  std::cerr << "Error: " << e.what() << std::endl;
-}
+  EasyOpenCL<float> framework (NO_DEBUG);
+  
+  //Register the kernel with the framework
+  auto& square = framework.load("squarefloat");
+  
+  //Bind the input buffer (initial values from a std::vector) and the output buffer
+  square.bindInput(0, std::vector<float> { 1.1, 2.2, 3.3, 4.4, 5.5, 11.0 });
+  square.bindOutput(1);
+  
+  //Evaluate the kernel
+  square.evaluate();
+  
+  //Display the results
+  square.showBuffer(1);
+  // [ 1.21, 4.84, 10.89, 19.36, 30.25, 121 ]
+} catch (std::exception& e) { std::cerr << "Error: " << e.what() << std::endl; }
 ```
-
 ```c
-// example/simplekernel.cl
-__kernel void simplekernel(	__global int* array, const int singlevalue )
+// kernels/squarefloat.cl
+__kernel void squarefloat(__global float* input, __global float* output)
 {
-	int i = get_global_id(0);
-	array[i] = array[i] * singlevalue;
+  int i = get_global_id(0);
+  output[i] = input[i] * input[i];
 }
+
 ```
 
 ### Getting started
@@ -63,8 +52,17 @@ cd EasyOpenCL
 mkdir build && cd build
 cmake ..
 make
-./test
+./simple
 ```
+
+### TODO:
+* Automatic generation of local and global work group sizes
+* .dot output of your current kernel graph 
+* Automatic generation of stub kernel (.cl) files based on the kernel links specified.
+* Asynchronous kernel calls
+* Benchmarks of asynchronous vs synchronous kernel calls
+* Detect circular dependencies of kernels
+* More examples - image processing, deep learning and a renderer/raytracer
 
 ### Thanks to:
 * Dhruba Bandopadhyay: [OpenCL Cookbook: Listing all devices and their critical attributes](http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/)

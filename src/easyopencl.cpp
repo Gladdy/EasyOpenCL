@@ -147,7 +147,7 @@ void EasyOpenCL<T>::evaluate(std::string id) {
 
   if (kernels.count(id) == 0) { raiseError("No kernel by id '" + id +"' exists"); }
 
-  kernels[id].runKernel();
+  kernels[id].evaluate();
 }
 
 /******************************************************************************/

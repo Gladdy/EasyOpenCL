@@ -187,7 +187,7 @@ void Kernel<T>::erase(uint argPos) {
 //  RUNNING A KERNEL
 /*******************************************************/
 template<typename T>
-void Kernel<T>::runKernel() {
+void Kernel<T>::evaluate() {
 
   if(debug) {
     std::cout << "Attempting to execute '" << id << "'." << std::endl;
@@ -225,7 +225,7 @@ void Kernel<T>::runKernel() {
           }
 
           //Run the kernel (this can trigger more dependencies)
-          sourceKernel->runKernel();
+          sourceKernel->evaluate();
 
           BoundBuffer& buf = sourceKernel->boundBuffers.find(promise.sourceArgPos)->second;
           cl_mem& memObject = buf.getMemObject();

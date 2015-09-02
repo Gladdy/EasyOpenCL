@@ -23,7 +23,7 @@ public:
   BoundScalar(T val)
   {
     //Defined inline to avoid template hell
-    if( std::is_trivial<T>::value == false) {
+    if(std::is_trivial<T>::value == false) {
       raiseError("The scalar type is not trivially copyable");
     }
 

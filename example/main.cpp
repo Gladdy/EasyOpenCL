@@ -1,16 +1,10 @@
 #include "easyopencl.h"
-#include "boundvalue.h"
-
+#include "mac.clh"
 
 #include <iostream>
 #include <exception>
 #include <vector>
 #include <cstdlib>
-
-struct MAC {
-  float mult;
-  float add;
-};
 
 int main() {
 

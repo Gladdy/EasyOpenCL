@@ -83,14 +83,6 @@ uint BoundPromise<T>::getSize() {
   return size;
 }
 
-// template class BoundPromise<int>;
+template class BoundPromise<int>;
 template class BoundPromise<float>;
-
-// template class BoundPromise<double>;
-
-// template BoundScalar::BoundScalar(int);
-// template int BoundScalar::getValue<int>();
-template BoundScalar::BoundScalar(float);
-template float BoundScalar::getValue<float>();
-// template BoundScalar::BoundScalar(double);
-// template double BoundScalar::getValue<double>();
+template class BoundPromise<double>;

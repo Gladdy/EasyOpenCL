@@ -411,17 +411,6 @@ Kernel<T>::operator cl_kernel() {
 
 
 template class Kernel<float>;
-// template class Kernel<int>;
-// template class Kernel<double>;
+template class Kernel<int>;
+template class Kernel<double>;
 
-// template void Kernel<int>::bindScalar<int>(uint,int);
-// template void Kernel<int>::bindScalar<float>(uint,float);
-// template void Kernel<int>::bindScalar<double>(uint,double);
-
-// template void Kernel<float>::bindScalar<int>(uint,int);
-// template void Kernel<float>::bindScalar<float>(uint,float);
-// template void Kernel<float>::bindScalar<double>(uint,double);
-
-// template void Kernel<double>::bindScalar<int>(uint,int);
-// template void Kernel<double>::bindScalar<float>(uint,float);
-// template void Kernel<double>::bindScalar<double>(uint,double);

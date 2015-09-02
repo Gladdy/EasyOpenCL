@@ -223,6 +223,6 @@ void EasyOpenCL<T>::printDeviceProperty(cl_device_id device) {
 
 
 template class EasyOpenCL<float>;
-//template class EasyOpenCL<int>;
-//template class EasyOpenCL<double>;
+template class EasyOpenCL<int>;
+template class EasyOpenCL<double>;
 

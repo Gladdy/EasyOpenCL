@@ -13,8 +13,9 @@ int main() {
     square.bindInput(0, std::vector<float> { 1.1, 2.2, 3.3, 4.4, 5.5, 11.0 });
     square.bindOutput(1);
     square.evaluate();
-    square.showBuffers();
+    square.showBuffer(1);
   }
-  catch (std::exception& e) { std::cerr << "Error: " << e.what() << std::endl; }
-
+  catch (std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+  }
 }

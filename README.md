@@ -12,7 +12,7 @@
 ```cpp
 // example/simple.cpp
 try {
-  EasyOpenCL<float> framework (NO_DEBUG);
+  EasyOpenCL<float> framework (SHOW_DEBUG);
   
   //Register the kernel with the framework
   auto& square = framework.load("squarefloat");
@@ -58,6 +58,7 @@ make
 * Benchmarks of asynchronous vs synchronous kernel calls
 * Detect circular dependencies of kernels
 * More examples - image processing, deep learning and a renderer/raytracer
+* Cleaning up the framework, getting public/private right + the different constructors
 
 ### Thanks to:
 * Dhruba Bandopadhyay: [OpenCL Cookbook: Listing all devices and their critical attributes](http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/)

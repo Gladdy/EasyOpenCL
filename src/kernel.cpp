@@ -346,7 +346,7 @@ std::vector<T> Kernel<T>::getBuffer(uint argPos) {
   //Clean up the buffer and raise an error if something went wrong
   if (status != CL_SUCCESS) {
     delete hostBuffer;
-    raiseError("clEnqueueReadBuffer" + '\t' + getErrorString(status));
+    raiseError("clEnqueueReadBuffer\t" + getErrorString(status));
   }
 
   // Element by element - copy the boundValues into the vector

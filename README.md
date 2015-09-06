@@ -51,15 +51,19 @@ make
 ```
 
 ### TODO:
-* Automatic generation of local and global work group sizes
-* .dot output of your current kernel graph 
-* Automatic generation of stub kernel (.cl) files based on the kernel links specified.
-* Asynchronous kernel calls
-* Benchmarks of asynchronous vs synchronous kernel calls
-* Detect circular dependencies of kernels
-* More examples - image processing, deep learning and a renderer/raytracer
-* Cleaning up the framework, getting public/private right + the different constructors
+* High priority
+  * More examples - image processing, deep learning (matrix operations) and a renderer/raytracer
+  * Asynchronous kernel calls + benchmarks of asynchronous vs synchronous kernel calls
+  * Cleaning up the framework, getting public/private right + the different constructors
 
+* Low priority:
+  * Automatic generation of local and global work group sizes
+  * Detect circular dependencies of kernels
+
+* Mehh whenever I have the time:
+  * .dot output of your current kernel dependency graph 
+  * Automatic generation of stub kernel (.cl) files based on the kernel links specified.
+  
 ### Thanks to:
 * Dhruba Bandopadhyay: [OpenCL Cookbook: Listing all devices and their critical attributes](http://dhruba.name/2012/08/14/opencl-cookbook-listing-all-devices-and-their-critical-attributes/)
 * elhigu: [cmake-findopencl](https://github.com/elhigu/cmake-findopencl)
